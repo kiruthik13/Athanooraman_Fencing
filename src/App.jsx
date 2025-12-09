@@ -8,6 +8,9 @@ import SignUp from './components/auth/SignUp';
 import SignIn from './components/auth/SignIn';
 import ForgotPassword from './components/auth/ForgotPassword';
 
+// Common Pages
+import TermsConditions from './components/common/TermsConditions';
+
 // Customer Pages
 import CustomerLayout from './components/customer/CustomerLayout';
 import Products from './components/customer/Products';
@@ -19,7 +22,6 @@ import Profile from './components/customer/Profile';
 // Admin Pages
 import AdminLayout from './components/admin/AdminLayout';
 import Dashboard from './components/admin/Dashboard';
-
 import ProductsAdmin from './components/admin/Products';
 import Quotes from './components/admin/Quotes';
 import ProjectsAdmin from './components/admin/Projects';
@@ -37,6 +39,7 @@ const App = () => {
           <Route path="/signup" element={<SignUp />} />
           <Route path="/signin" element={<SignIn />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/terms" element={<TermsConditions />} />
 
           {/* Customer Routes */}
           <Route

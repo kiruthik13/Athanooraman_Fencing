@@ -113,6 +113,19 @@ const CustomerLayout = () => {
                     <Outlet />
                 </div>
             </main>
+
+            {/* Footer */}
+            <footer className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 text-center text-gray-400 text-sm animate-fade-in delay-500">
+                <p>&copy; {new Date().getFullYear()} Athanuramman Fencings. All rights reserved.</p>
+                <div className="mt-2">
+                    <button
+                        onClick={() => navigate('/terms')}
+                        className="text-gray-500 hover:text-neon-blue transition-colors underline decoration-dotted underline-offset-4"
+                    >
+                        Terms & Conditions
+                    </button>
+                </div>
+            </footer>
         </div>
     );
 };

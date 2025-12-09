@@ -28,7 +28,14 @@ const Profile = () => {
             if (currentUser) {
                 const userDoc = await getDoc(doc(db, 'users', currentUser.uid));
                 if (userDoc.exists()) {
-                    setUserData(userDoc.data());
+                    const data = userDoc.data();
+                    setUserData({
+                        ...data,
+                        fullName: data.fullName || '',
+                        email: data.email || currentUser.email || '',
+                        phone: data.phone || '',
+                        location: data.location || ''
+                    });
                 }
             }
         } catch (error) {
@@ -47,9 +54,9 @@ const Profile = () => {
         setSaving(true);
         try {
             await updateDoc(doc(db, 'users', currentUser.uid), {
-                fullName: userData.fullName,
-                phone: userData.phone,
-                location: userData.location,
+                fullName: userData.fullName || '',
+                phone: userData.phone || '',
+                location: userData.location || '',
                 updatedAt: new Date().toISOString()
             });
             showToast('Profile updated successfully!', 'success');
