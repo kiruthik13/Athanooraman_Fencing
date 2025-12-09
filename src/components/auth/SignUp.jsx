@@ -25,7 +25,7 @@ const SignUp = () => {
     const [loading, setLoading] = useState(false);
     const [errors, setErrors] = useState({});
 
-    const locations = ['Bangalore', 'Hyderabad', 'Mumbai', 'Chennai', 'Coimbatore', 'Madurai'];
+    const locations = ['Coimbatore', 'Erode', 'Tirupur', 'Chennai', 'Madurai', 'Bangalore', 'Hyderabad', 'Mumbai'];
 
     const validateForm = () => {
         const newErrors = {};
@@ -216,16 +216,20 @@ const SignUp = () => {
                             </label>
                             <div className="relative group">
                                 <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 group-focus-within:text-neon-blue transition-colors w-5 h-5" />
-                                <select
+                                <input
+                                    type="text"
+                                    list="location-options"
                                     name="location"
                                     value={formData.location}
                                     onChange={handleChange}
-                                    className="input pl-10 bg-white/5 border-white/10 text-white focus:border-neon-blue focus:shadow-neon appearance-none"
-                                >
+                                    className="input pl-10 bg-white/5 border-white/10 text-white focus:border-neon-blue focus:shadow-neon"
+                                    placeholder="Select or type your location"
+                                />
+                                <datalist id="location-options">
                                     {locations.map(loc => (
-                                        <option key={loc} value={loc} className="bg-gray-900 text-white">{loc}</option>
+                                        <option key={loc} value={loc} />
                                     ))}
-                                </select>
+                                </datalist>
                             </div>
                         </div>
 
