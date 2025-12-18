@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Eye, EyeOff, Mail, Lock, User, Phone, MapPin, UserCircle } from 'lucide-react';
+import { Eye, EyeOff, Mail, Lock, User, Phone, MapPin, UserCircle, Sparkles, ArrowRight, Shield } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../common/Toast';
 
@@ -24,6 +24,7 @@ const SignUp = () => {
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     const [loading, setLoading] = useState(false);
     const [errors, setErrors] = useState({});
+    const [focusedField, setFocusedField] = useState(null);
 
     const locations = ['Coimbatore', 'Erode', 'Tirupur', 'Chennai', 'Madurai', 'Bangalore', 'Hyderabad', 'Mumbai'];
 
@@ -66,7 +67,7 @@ const SignUp = () => {
 
     const getPasswordStrength = () => {
         const password = formData.password;
-        if (!password) return { strength: 0, label: '', color: '' };
+        if (!password) return { strength: 0, label: '', color: '', gradientColor: '' };
 
         let strength = 0;
         if (password.length >= 6) strength++;
@@ -76,9 +77,19 @@ const SignUp = () => {
         if (/[^a-zA-Z\d]/.test(password)) strength++;
 
         const labels = ['', 'Weak', 'Fair', 'Good', 'Strong'];
-        const colors = ['', 'bg-red-500', 'bg-orange-500', 'bg-yellow-500', 'bg-green-500'];
+        const gradients = [
+            '',
+            'bg-gradient-to-r from-red-500 to-red-600',
+            'bg-gradient-to-r from-orange-500 to-yellow-500',
+            'bg-gradient-to-r from-yellow-500 to-green-500',
+            'bg-gradient-to-r from-green-500 to-emerald-500'
+        ];
 
-        return { strength, label: labels[Math.min(strength, 4)], color: colors[Math.min(strength, 4)] };
+        return {
+            strength,
+            label: labels[Math.min(strength, 4)],
+            gradientColor: gradients[Math.min(strength, 4)]
+        };
     };
 
     const handleChange = (e) => {
@@ -87,7 +98,6 @@ const SignUp = () => {
             ...prev,
             [name]: type === 'checkbox' ? checked : value
         }));
-        // Clear error for this field
         if (errors[name]) {
             setErrors(prev => ({ ...prev, [name]: '' }));
         }
@@ -139,231 +149,329 @@ const SignUp = () => {
     const passwordStrength = getPasswordStrength();
 
     return (
-        <div className="min-h-screen bg-transparent flex items-center justify-center p-4 relative overflow-hidden">
-            {/* Pulsing Background Blobs */}
-            <div className="absolute top-1/4 left-1/4 w-72 h-72 bg-neon-blue/20 rounded-full blur-[100px] animate-pulse-fast"></div>
-            <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-neon-purple/20 rounded-full blur-[100px] animate-pulse-fast delay-700"></div>
+        <div className="min-h-screen bg-transparent flex items-center justify-center p-4 py-8 relative overflow-hidden">
+            {/* Animated Gradient Mesh Background */}
+            <div className="absolute inset-0 overflow-hidden">
+                <div className="absolute top-0 left-1/4 w-96 h-96 bg-gradient-to-br from-neon-blue/30 via-purple-500/20 to-transparent rounded-full blur-3xl animate-pulse-fast opacity-60"></div>
+                <div className="absolute bottom-0 right-1/4 w-[500px] h-[500px] bg-gradient-to-tl from-neon-purple/30 via-pink-500/20 to-transparent rounded-full blur-3xl animate-pulse-fast delay-700 opacity-60"></div>
+                <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-gradient-to-r from-cyan-500/20 to-blue-500/20 rounded-full blur-3xl animate-spin-slow opacity-40"></div>
 
-            <div className="w-full max-w-md animate-slide-in relative z-10">
-                <div className="text-center mb-8">
-                    <h1 className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-neon-blue to-neon-purple text-glow mb-2">Athanuramman Fencing</h1>
-                    <p className="text-gray-400">Create your account</p>
+                {/* Floating Particles */}
+                <div className="absolute top-1/4 left-1/3 w-2 h-2 bg-neon-blue rounded-full animate-levitate opacity-70"></div>
+                <div className="absolute top-2/3 right-1/3 w-1.5 h-1.5 bg-neon-purple rounded-full animate-levitate delay-700 opacity-70"></div>
+                <div className="absolute bottom-1/4 left-1/2 w-1 h-1 bg-cyan-400 rounded-full animate-levitate delay-300 opacity-70"></div>
+            </div>
+
+            <div className="w-full max-w-lg animate-slide-in relative z-10">
+                {/* Header Section */}
+                <div className="text-center mb-8 flex flex-col items-center">
+                    <div className="relative mb-5 group">
+                        <Shield className="w-16 h-16 text-neon-blue animate-pulse-fast" />
+                        <Sparkles className="absolute -top-1 -right-1 w-5 h-5 text-neon-purple opacity-0 group-hover:opacity-100 transition-opacity duration-300 animate-pulse" />
+                    </div>
+
+                    <h1 className="text-5xl font-bold mb-3 relative">
+                        <span className="text-transparent bg-clip-text bg-gradient-to-r from-neon-blue via-purple-400 to-neon-purple animate-glow">
+                            Athanuramman Fencing
+                        </span>
+                    </h1>
+                    <p className="text-gray-400 text-lg font-light tracking-wide">Create your account to get started</p>
                 </div>
 
-                <div className="glass-panel p-8 rounded-2xl border border-neon-blue/20 shadow-neon animate-float-6s">
-                    <form onSubmit={handleSubmit} className="space-y-4">
-                        {/* Full Name */}
-                        <div>
-                            <label className="block text-sm font-medium text-gray-300 mb-1 ml-1">
-                                Full Name *
-                            </label>
-                            <div className="relative group">
-                                <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 group-focus-within:text-neon-blue transition-colors w-5 h-5" />
-                                <input
-                                    type="text"
-                                    name="fullName"
-                                    value={formData.fullName}
-                                    onChange={handleChange}
-                                    className={`input pl-10 bg-white/5 border-white/10 text-white placeholder-gray-500 focus:border-neon-blue focus:shadow-neon ${errors.fullName ? 'border-red-500/50 focus:border-red-500' : ''}`}
-                                    placeholder="Enter your full name"
-                                />
-                            </div>
-                            {errors.fullName && <p className="text-red-400 text-sm mt-1">{errors.fullName}</p>}
-                        </div>
+                {/* Main Card with 3D Effect */}
+                <div className="relative group">
+                    {/* 3D Shadow Layers */}
+                    <div className="absolute inset-0 bg-gradient-to-br from-neon-blue/10 to-neon-purple/10 rounded-3xl blur-xl transform translate-y-2 translate-x-2 opacity-50"></div>
+                    <div className="absolute inset-0 bg-gradient-to-tl from-purple-500/5 to-cyan-500/5 rounded-3xl blur-lg transform -translate-y-1 -translate-x-1 opacity-30"></div>
 
-                        {/* Email */}
-                        <div>
-                            <label className="block text-sm font-medium text-gray-300 mb-1 ml-1">
-                                Email Address *
-                            </label>
-                            <div className="relative group">
-                                <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 group-focus-within:text-neon-blue transition-colors w-5 h-5" />
-                                <input
-                                    type="email"
-                                    name="email"
-                                    value={formData.email}
-                                    onChange={handleChange}
-                                    className={`input pl-10 bg-white/5 border-white/10 text-white placeholder-gray-500 focus:border-neon-blue focus:shadow-neon ${errors.email ? 'border-red-500/50 focus:border-red-500' : ''}`}
-                                    placeholder="Enter your email"
-                                />
-                            </div>
-                            {errors.email && <p className="text-red-400 text-sm mt-1">{errors.email}</p>}
-                        </div>
+                    {/* Main Glass Panel */}
+                    <div className="relative bg-gradient-to-br from-white/10 via-white/5 to-white/10 backdrop-blur-2xl rounded-3xl border border-white/20 shadow-[0_8px_32px_0_rgba(0,243,255,0.2)] p-8 hover:shadow-[0_8px_48px_0_rgba(189,0,255,0.3)] transition-all duration-500 animate-float-6s">
+                        {/* Top Accent Line */}
+                        <div className="absolute top-0 left-1/2 transform -translate-x-1/2 w-32 h-1 bg-gradient-to-r from-transparent via-neon-purple to-transparent rounded-full"></div>
 
-                        {/* Phone */}
-                        <div>
-                            <label className="block text-sm font-medium text-gray-300 mb-1 ml-1">
-                                Phone Number *
-                            </label>
-                            <div className="relative group">
-                                <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 group-focus-within:text-neon-blue transition-colors w-5 h-5" />
-                                <input
-                                    type="text"
-                                    name="phone"
-                                    value={formData.phone}
-                                    onChange={handlePhoneChange}
-                                    className={`input pl-10 bg-white/5 border-white/10 text-white placeholder-gray-500 focus:border-neon-blue focus:shadow-neon ${errors.phone ? 'border-red-500/50 focus:border-red-500' : ''}`}
-                                    placeholder="+91 XXXXX XXXXX"
-                                />
+                        <form onSubmit={handleSubmit} className="space-y-5">
+                            {/* Full Name with Floating Label */}
+                            <div className="relative">
+                                <div className="relative group/input">
+                                    <User className={`absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 transition-all duration-300 ${focusedField === 'fullName' ? 'text-neon-blue scale-110' : 'text-gray-500'
+                                        }`} />
+                                    <input
+                                        type="text"
+                                        name="fullName"
+                                        value={formData.fullName}
+                                        onChange={handleChange}
+                                        onFocus={() => setFocusedField('fullName')}
+                                        onBlur={() => setFocusedField(null)}
+                                        className={`w-full pl-12 pr-4 py-3.5 bg-white/5 border-2 rounded-xl text-white placeholder-transparent focus:bg-white/10 transition-all duration-300 peer ${errors.fullName ? 'border-red-500/50 focus:border-red-500 focus:shadow-[0_0_20px_rgba(239,68,68,0.3)]' : 'border-white/10 focus:border-neon-blue focus:shadow-[0_0_20px_rgba(0,243,255,0.3)]'
+                                            }`}
+                                        placeholder="Full Name"
+                                        required
+                                    />
+                                    <label className={`absolute left-12 transition-all duration-300 pointer-events-none ${formData.fullName || focusedField === 'fullName'
+                                            ? '-top-3 left-3 text-xs bg-gradient-to-r from-neon-blue to-cyan-400 bg-clip-text text-transparent font-semibold px-2'
+                                            : 'top-1/2 -translate-y-1/2 text-gray-400'
+                                        }`}>
+                                        Full Name *
+                                    </label>
+                                </div>
+                                {errors.fullName && <p className="text-red-400 text-xs mt-1.5 ml-1 font-medium">{errors.fullName}</p>}
                             </div>
-                            {errors.phone && <p className="text-red-400 text-sm mt-1">{errors.phone}</p>}
-                        </div>
 
-                        {/* Location */}
-                        <div>
-                            <label className="block text-sm font-medium text-gray-300 mb-1 ml-1">
-                                Location *
-                            </label>
-                            <div className="relative group">
-                                <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 group-focus-within:text-neon-blue transition-colors w-5 h-5" />
-                                <input
-                                    type="text"
-                                    list="location-options"
-                                    name="location"
-                                    value={formData.location}
-                                    onChange={handleChange}
-                                    className="input pl-10 bg-white/5 border-white/10 text-white focus:border-neon-blue focus:shadow-neon"
-                                    placeholder="Select or type your location"
-                                />
-                                <datalist id="location-options">
-                                    {locations.map(loc => (
-                                        <option key={loc} value={loc} />
-                                    ))}
-                                </datalist>
+                            {/* Email with Floating Label */}
+                            <div className="relative">
+                                <div className="relative group/input">
+                                    <Mail className={`absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 transition-all duration-300 ${focusedField === 'email' ? 'text-neon-blue scale-110' : 'text-gray-500'
+                                        }`} />
+                                    <input
+                                        type="email"
+                                        name="email"
+                                        value={formData.email}
+                                        onChange={handleChange}
+                                        onFocus={() => setFocusedField('email')}
+                                        onBlur={() => setFocusedField(null)}
+                                        className={`w-full pl-12 pr-4 py-3.5 bg-white/5 border-2 rounded-xl text-white placeholder-transparent focus:bg-white/10 transition-all duration-300 peer ${errors.email ? 'border-red-500/50 focus:border-red-500 focus:shadow-[0_0_20px_rgba(239,68,68,0.3)]' : 'border-white/10 focus:border-neon-blue focus:shadow-[0_0_20px_rgba(0,243,255,0.3)]'
+                                            }`}
+                                        placeholder="Email Address"
+                                        required
+                                    />
+                                    <label className={`absolute left-12 transition-all duration-300 pointer-events-none ${formData.email || focusedField === 'email'
+                                            ? '-top-3 left-3 text-xs bg-gradient-to-r from-neon-blue to-cyan-400 bg-clip-text text-transparent font-semibold px-2'
+                                            : 'top-1/2 -translate-y-1/2 text-gray-400'
+                                        }`}>
+                                        Email Address *
+                                    </label>
+                                </div>
+                                {errors.email && <p className="text-red-400 text-xs mt-1.5 ml-1 font-medium">{errors.email}</p>}
                             </div>
-                        </div>
 
-                        {/* Role */}
-                        <div>
-                            <label className="block text-sm font-medium text-gray-300 mb-1 ml-1">
-                                Account Type *
-                            </label>
-                            <div className="relative group">
-                                <UserCircle className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 group-focus-within:text-neon-blue transition-colors w-5 h-5" />
-                                <select
-                                    name="role"
-                                    value={formData.role}
-                                    onChange={handleChange}
-                                    className="input pl-10 bg-white/5 border-white/10 text-white focus:border-neon-blue focus:shadow-neon appearance-none"
-                                >
-                                    <option value="Customer" className="bg-gray-900 text-white">Customer</option>
-                                    <option value="Admin" className="bg-gray-900 text-white">Admin</option>
-                                </select>
+                            {/* Phone with Floating Label */}
+                            <div className="relative">
+                                <div className="relative group/input">
+                                    <Phone className={`absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 transition-all duration-300 ${focusedField === 'phone' ? 'text-neon-blue scale-110' : 'text-gray-500'
+                                        }`} />
+                                    <input
+                                        type="text"
+                                        name="phone"
+                                        value={formData.phone}
+                                        onChange={handlePhoneChange}
+                                        onFocus={() => setFocusedField('phone')}
+                                        onBlur={() => setFocusedField(null)}
+                                        className={`w-full pl-12 pr-4 py-3.5 bg-white/5 border-2 rounded-xl text-white placeholder-transparent focus:bg-white/10 transition-all duration-300 peer ${errors.phone ? 'border-red-500/50 focus:border-red-500 focus:shadow-[0_0_20px_rgba(239,68,68,0.3)]' : 'border-white/10 focus:border-neon-blue focus:shadow-[0_0_20px_rgba(0,243,255,0.3)]'
+                                            }`}
+                                        placeholder="Phone Number"
+                                        required
+                                    />
+                                    <label className={`absolute left-12 transition-all duration-300 pointer-events-none ${formData.phone || focusedField === 'phone'
+                                            ? '-top-3 left-3 text-xs bg-gradient-to-r from-neon-blue to-cyan-400 bg-clip-text text-transparent font-semibold px-2'
+                                            : 'top-1/2 -translate-y-1/2 text-gray-400'
+                                        }`}>
+                                        Phone Number *
+                                    </label>
+                                </div>
+                                {errors.phone && <p className="text-red-400 text-xs mt-1.5 ml-1 font-medium">{errors.phone}</p>}
                             </div>
-                        </div>
 
-                        {/* Password */}
-                        <div>
-                            <label className="block text-sm font-medium text-gray-300 mb-1 ml-1">
-                                Password *
-                            </label>
-                            <div className="relative group">
-                                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 group-focus-within:text-neon-purple transition-colors w-5 h-5" />
-                                <input
-                                    type={showPassword ? 'text' : 'password'}
-                                    name="password"
-                                    value={formData.password}
-                                    onChange={handleChange}
-                                    className={`input pl-10 pr-10 bg-white/5 border-white/10 text-white placeholder-gray-500 focus:border-neon-purple focus:shadow-neon-purple ${errors.password ? 'border-red-500/50 focus:border-red-500' : ''}`}
-                                    placeholder="Enter your password"
-                                />
-                                <button
-                                    type="button"
-                                    onClick={() => setShowPassword(!showPassword)}
-                                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white transition-colors"
-                                >
-                                    {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                                </button>
-                            </div>
-                            {errors.password && <p className="text-red-400 text-sm mt-1">{errors.password}</p>}
-
-                            {/* Password Strength */}
-                            {formData.password && (
-                                <div className="mt-2">
-                                    <div className="flex items-center gap-2">
-                                        <div className="flex-1 h-2 bg-white/10 rounded-full overflow-hidden">
-                                            <div
-                                                className={`h-full ${passwordStrength.color} transition-all duration-300 shadow-[0_0_10px_currentColor]`}
-                                                style={{ width: `${(passwordStrength.strength / 4) * 100}%` }}
-                                            ></div>
-                                        </div>
-                                        <span className="text-sm text-gray-400">{passwordStrength.label}</span>
+                            {/* Two Column Layout for Location and Role */}
+                            <div className="grid grid-cols-2 gap-4">
+                                {/* Location */}
+                                <div className="relative">
+                                    <div className="relative group/input">
+                                        <MapPin className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 transition-all duration-300 ${focusedField === 'location' ? 'text-neon-blue scale-110' : 'text-gray-500'
+                                            }`} />
+                                        <input
+                                            type="text"
+                                            list="location-options"
+                                            name="location"
+                                            value={formData.location}
+                                            onChange={handleChange}
+                                            onFocus={() => setFocusedField('location')}
+                                            onBlur={() => setFocusedField(null)}
+                                            className="w-full pl-10 pr-3 py-3.5 bg-white/5 border-2 border-white/10 rounded-xl text-white placeholder-transparent focus:border-neon-blue focus:bg-white/10 transition-all duration-300 focus:shadow-[0_0_20px_rgba(0,243,255,0.3)] peer text-sm"
+                                            placeholder="Location"
+                                        />
+                                        <label className={`absolute left-10 transition-all duration-300 pointer-events-none ${formData.location || focusedField === 'location'
+                                                ? '-top-2.5 left-2 text-xs bg-gradient-to-r from-neon-blue to-cyan-400 bg-clip-text text-transparent font-semibold px-1.5'
+                                                : 'top-1/2 -translate-y-1/2 text-gray-400 text-sm'
+                                            }`}>
+                                            Location *
+                                        </label>
+                                        <datalist id="location-options">
+                                            {locations.map(loc => (
+                                                <option key={loc} value={loc} />
+                                            ))}
+                                        </datalist>
                                     </div>
                                 </div>
-                            )}
-                        </div>
 
-                        {/* Confirm Password */}
-                        <div>
-                            <label className="block text-sm font-medium text-gray-300 mb-1 ml-1">
-                                Confirm Password *
-                            </label>
-                            <div className="relative group">
-                                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 group-focus-within:text-neon-purple transition-colors w-5 h-5" />
-                                <input
-                                    type={showConfirmPassword ? 'text' : 'password'}
-                                    name="confirmPassword"
-                                    value={formData.confirmPassword}
-                                    onChange={handleChange}
-                                    className={`input pl-10 pr-10 bg-white/5 border-white/10 text-white placeholder-gray-500 focus:border-neon-purple focus:shadow-neon-purple ${errors.confirmPassword ? 'border-red-500/50 focus:border-red-500' : ''}`}
-                                    placeholder="Confirm your password"
-                                />
-                                <button
-                                    type="button"
-                                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white transition-colors"
+                                {/* Role */}
+                                <div className="relative">
+                                    <div className="relative group/input">
+                                        <UserCircle className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 transition-all duration-300 ${focusedField === 'role' ? 'text-neon-blue scale-110' : 'text-gray-500'
+                                            }`} />
+                                        <select
+                                            name="role"
+                                            value={formData.role}
+                                            onChange={handleChange}
+                                            onFocus={() => setFocusedField('role')}
+                                            onBlur={() => setFocusedField(null)}
+                                            className="w-full pl-10 pr-3 py-3.5 bg-white/5 border-2 border-white/10 rounded-xl text-white focus:border-neon-blue focus:bg-white/10 transition-all duration-300 focus:shadow-[0_0_20px_rgba(0,243,255,0.3)] appearance-none text-sm cursor-pointer"
+                                        >
+                                            <option value="Customer" className="bg-gray-900 text-white">Customer</option>
+                                            <option value="Admin" className="bg-gray-900 text-white">Admin</option>
+                                        </select>
+                                        <label className="absolute -top-2.5 left-2 text-xs bg-gradient-to-r from-neon-blue to-cyan-400 bg-clip-text text-transparent font-semibold px-1.5">
+                                            Account Type *
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Password with Floating Label */}
+                            <div className="relative">
+                                <div className="relative group/input">
+                                    <Lock className={`absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 transition-all duration-300 ${focusedField === 'password' ? 'text-neon-purple scale-110' : 'text-gray-500'
+                                        }`} />
+                                    <input
+                                        type={showPassword ? 'text' : 'password'}
+                                        name="password"
+                                        value={formData.password}
+                                        onChange={handleChange}
+                                        onFocus={() => setFocusedField('password')}
+                                        onBlur={() => setFocusedField(null)}
+                                        className={`w-full pl-12 pr-12 py-3.5 bg-white/5 border-2 rounded-xl text-white placeholder-transparent focus:bg-white/10 transition-all duration-300 peer ${errors.password ? 'border-red-500/50 focus:border-red-500 focus:shadow-[0_0_20px_rgba(239,68,68,0.3)]' : 'border-white/10 focus:border-neon-purple focus:shadow-[0_0_20px_rgba(189,0,255,0.3)]'
+                                            }`}
+                                        placeholder="Password"
+                                        required
+                                    />
+                                    <label className={`absolute left-12 transition-all duration-300 pointer-events-none ${formData.password || focusedField === 'password'
+                                            ? '-top-3 left-3 text-xs bg-gradient-to-r from-neon-purple to-pink-400 bg-clip-text text-transparent font-semibold px-2'
+                                            : 'top-1/2 -translate-y-1/2 text-gray-400'
+                                        }`}>
+                                        Password *
+                                    </label>
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowPassword(!showPassword)}
+                                        className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white transition-all duration-300 hover:scale-110 focus:outline-none"
+                                    >
+                                        {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                                    </button>
+                                </div>
+                                {errors.password && <p className="text-red-400 text-xs mt-1.5 ml-1 font-medium">{errors.password}</p>}
+
+                                {/* Enhanced Password Strength Indicator */}
+                                {formData.password && (
+                                    <div className="mt-3 space-y-1.5">
+                                        <div className="flex items-center gap-3">
+                                            <div className="flex-1 h-2.5 bg-white/10 rounded-full overflow-hidden backdrop-blur-sm border border-white/5">
+                                                <div
+                                                    className={`h-full ${passwordStrength.gradientColor} transition-all duration-500 shadow-[0_0_15px_currentColor]`}
+                                                    style={{ width: `${(passwordStrength.strength / 4) * 100}%` }}
+                                                ></div>
+                                            </div>
+                                            <span className="text-xs font-semibold text-gray-300 min-w-[50px]">{passwordStrength.label}</span>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Confirm Password with Floating Label */}
+                            <div className="relative">
+                                <div className="relative group/input">
+                                    <Lock className={`absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 transition-all duration-300 ${focusedField === 'confirmPassword' ? 'text-neon-purple scale-110' : 'text-gray-500'
+                                        }`} />
+                                    <input
+                                        type={showConfirmPassword ? 'text' : 'password'}
+                                        name="confirmPassword"
+                                        value={formData.confirmPassword}
+                                        onChange={handleChange}
+                                        onFocus={() => setFocusedField('confirmPassword')}
+                                        onBlur={() => setFocusedField(null)}
+                                        className={`w-full pl-12 pr-12 py-3.5 bg-white/5 border-2 rounded-xl text-white placeholder-transparent focus:bg-white/10 transition-all duration-300 peer ${errors.confirmPassword ? 'border-red-500/50 focus:border-red-500 focus:shadow-[0_0_20px_rgba(239,68,68,0.3)]' : 'border-white/10 focus:border-neon-purple focus:shadow-[0_0_20px_rgba(189,0,255,0.3)]'
+                                            }`}
+                                        placeholder="Confirm Password"
+                                        required
+                                    />
+                                    <label className={`absolute left-12 transition-all duration-300 pointer-events-none ${formData.confirmPassword || focusedField === 'confirmPassword'
+                                            ? '-top-3 left-3 text-xs bg-gradient-to-r from-neon-purple to-pink-400 bg-clip-text text-transparent font-semibold px-2'
+                                            : 'top-1/2 -translate-y-1/2 text-gray-400'
+                                        }`}>
+                                        Confirm Password *
+                                    </label>
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                                        className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white transition-all duration-300 hover:scale-110 focus:outline-none"
+                                    >
+                                        {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                                    </button>
+                                </div>
+                                {errors.confirmPassword && <p className="text-red-400 text-xs mt-1.5 ml-1 font-medium">{errors.confirmPassword}</p>}
+                            </div>
+
+                            {/* Terms & Conditions */}
+                            <div className="flex items-start pt-2">
+                                <div className="flex items-center h-5">
+                                    <input
+                                        id="terms"
+                                        name="terms"
+                                        type="checkbox"
+                                        checked={formData.terms}
+                                        onChange={handleChange}
+                                        className="w-5 h-5 rounded-md bg-white/10 border-2 border-white/20 text-neon-blue focus:ring-2 focus:ring-neon-blue focus:ring-offset-0 transition-all duration-300 cursor-pointer"
+                                    />
+                                </div>
+                                <div className="ml-3 text-sm">
+                                    <label htmlFor="terms" className="font-medium text-gray-300 cursor-pointer">
+                                        I agree to the <a href="#" className="bg-gradient-to-r from-neon-blue to-neon-purple bg-clip-text text-transparent hover:from-neon-purple hover:to-neon-blue transition-all duration-300 font-semibold">Terms and Conditions</a>
+                                    </label>
+                                    {errors.terms && <p className="text-red-400 text-xs mt-1 font-medium">{errors.terms}</p>}
+                                </div>
+                            </div>
+
+                            {/* Premium Submit Button */}
+                            <button
+                                type="submit"
+                                disabled={loading}
+                                className="relative w-full mt-6 py-4 rounded-xl font-bold text-lg overflow-hidden group/btn disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 hover:scale-[1.02] active:scale-[0.98]"
+                            >
+                                {/* Animated Background Gradient */}
+                                <div className="absolute inset-0 bg-gradient-to-r from-neon-blue via-purple-500 to-neon-purple"></div>
+                                <div className="absolute inset-0 bg-gradient-to-r from-neon-purple via-pink-500 to-neon-blue opacity-0 group-hover/btn:opacity-100 transition-opacity duration-500"></div>
+
+                                {/* Shimmer Effect */}
+                                <div className="absolute inset-0 translate-x-[-100%] group-hover/btn:translate-x-[100%] transition-transform duration-1000 bg-gradient-to-r from-transparent via-white/30 to-transparent skew-x-12"></div>
+
+                                {/* Button Content */}
+                                <div className="relative flex items-center justify-center gap-3 text-white">
+                                    {loading ? (
+                                        <>
+                                            <div className="w-6 h-6 border-3 border-white/30 border-t-white rounded-full animate-spin"></div>
+                                            <span className="tracking-wide">Creating Account...</span>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <span className="tracking-wide">Create Account</span>
+                                            <ArrowRight className="w-5 h-5 group-hover/btn:translate-x-1 transition-transform duration-300" />
+                                        </>
+                                    )}
+                                </div>
+                            </button>
+                        </form>
+
+                        {/* Sign In Link */}
+                        <div className="mt-6 text-center">
+                            <p className="text-gray-400 text-sm">
+                                Already have an account?{' '}
+                                <Link
+                                    to="/signin"
+                                    className="bg-gradient-to-r from-neon-blue to-neon-purple bg-clip-text text-transparent font-bold hover:from-neon-purple hover:to-neon-blue transition-all duration-300 relative group/signin"
                                 >
-                                    {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                                </button>
-                            </div>
-                            {errors.confirmPassword && <p className="text-red-400 text-sm mt-1">{errors.confirmPassword}</p>}
+                                    Sign In
+                                    <span className="absolute bottom-0 left-0 w-full h-0.5 bg-gradient-to-r from-neon-blue to-neon-purple scale-x-0 group-hover/signin:scale-x-100 transition-transform duration-300"></span>
+                                </Link>
+                            </p>
                         </div>
-
-                        {/* Terms & Conditions Checkbox */}
-                        <div className="flex items-start">
-                            <div className="flex items-center h-5">
-                                <input
-                                    id="terms"
-                                    name="terms"
-                                    type="checkbox"
-                                    checked={formData.terms}
-                                    onChange={handleChange}
-                                    className="w-4 h-4 rounded bg-white/10 border-white/20 text-neon-blue focus:ring-neon-blue focus:ring-offset-0 focus:ring-offset-transparent"
-                                />
-                            </div>
-                            <div className="ml-2 text-sm">
-                                <label htmlFor="terms" className="font-medium text-gray-300">
-                                    I agree to the <a href="#" className="text-neon-blue hover:underline">Terms and Conditions</a>
-                                </label>
-                                {errors.terms && <p className="text-red-400 text-xs mt-1">{errors.terms}</p>}
-                            </div>
-                        </div>
-
-                        {/* Submit Button */}
-                        <button
-                            type="submit"
-                            disabled={loading}
-                            className="w-full btn btn-primary py-3 text-lg font-bold flex items-center justify-center gap-2 group relative overflow-hidden disabled:opacity-50 disabled:cursor-not-allowed mt-4"
-                        >
-                            <div className="absolute inset-0 bg-gradient-to-r from-neon-blue/20 to-neon-purple/20 translate-x-[-100%] group-hover:translate-x-100 transition-transform duration-700"></div>
-                            {loading ? (
-                                <>
-                                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                                    <span className="text-glow">Creating Account...</span>
-                                </>
-                            ) : (
-                                <span className="text-glow">Sign Up</span>
-                            )}
-                        </button>
-                    </form>
-
-                    <div className="mt-6 text-center">
-                        <p className="text-gray-400">
-                            Already have an account?{' '}
-                            <Link to="/signin" className="text-neon-blue hover:text-neon-purple font-medium transition-colors hover:underline decoration-neon-purple/30">
-                                Sign In
-                            </Link>
-                        </p>
                     </div>
                 </div>
             </div>
