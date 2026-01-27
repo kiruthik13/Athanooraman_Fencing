@@ -6,13 +6,15 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "build:admin": "vite build -c vite.admin.config.js",
+    "build:client": "vite build -c vite.client.config.js",
     "lint": "eslint .",
     "preview": "vite preview"
   },
   "dependencies": {
     "date-fns": "^4.1.0",
     "firebase": "^12.6.0",
-    "jspdf": "^3.0.4",
+    "jspdf": "^4.0.0",
     "lucide-react": "^0.556.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
