@@ -6,8 +6,8 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "build:admin": "vite build -c vite.admin.config.js",
-    "build:client": "vite build -c vite.client.config.js",
+    "build:admin": "vite build -c vite.admin.config.js && node -e \"require('fs').renameSync('dist-admin/admin.html', 'dist-admin/index.html')\"",
+    "build:client": "vite build -c vite.client.config.js && node -e \"require('fs').renameSync('dist-client/client.html', 'dist-client/index.html')\"",
     "lint": "eslint .",
     "preview": "vite preview"
   },
