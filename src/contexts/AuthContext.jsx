@@ -71,7 +71,7 @@ export const AuthProvider = ({ children }) => {
             const user = userCredential.user;
 
             await updateProfile(user, {
-                displayName: userData.fullName
+                displayName: userData.displayName
             });
 
             // Attempt to save to Firestore
@@ -79,25 +79,28 @@ export const AuthProvider = ({ children }) => {
                 await setDoc(doc(db, 'users', user.uid), {
                     uid: user.uid,
                     email: email,
-                    fullName: userData.fullName,
+                    fullName: userData.displayName,
+                    phone: userData.phone || '',
                     role: userData.role || 'customer',
                     createdAt: new Date().toISOString()
                 });
             } catch (fsError) {
                 console.warn('Firestore save failed during signup:', fsError);
-                // We do not fail the whole signup if Firestore fails here, 
-                // but usually we might want to handle it. 
-                // For this task, we focus on signin flow robustness.
             }
 
-            const profile = { role: userData.role || 'customer', ...userData };
+            const profile = {
+                role: userData.role || 'customer',
+                fullName: userData.displayName,
+                phone: userData.phone || '',
+                ...userData
+            };
             setCurrentUser(user);
             setUserProfile(profile);
 
-            return { user, error: null };
+            return { user, success: true, error: null };
         } catch (error) {
             console.error('Signup error:', error);
-            return { error: error.code, message: getAuthErrorMessage(error.code) };
+            return { success: false, error: error.code, message: getAuthErrorMessage(error.code) };
         }
     };
 

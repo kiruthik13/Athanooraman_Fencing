@@ -1,183 +1,170 @@
 import React, { useState } from 'react';
-import { X, IndianRupee, Clock, Package, CheckCircle, Loader } from 'lucide-react';
+import { X, IndianRupee, Package, CheckCircle, Sparkles, ShieldCheck, Zap, ArrowRight, Layers, Ruler } from 'lucide-react';
 import { collection, addDoc } from 'firebase/firestore';
 import { db } from '../../config/firebase';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../common/Toast';
+import GlassCard from '../common/GlassCard';
+import PremiumButton from '../common/PremiumButton';
 
 const ProductDetail = ({ product, onClose }) => {
     const { currentUser } = useAuth();
     const { showToast } = useToast();
-    const [currentImageIndex, setCurrentImageIndex] = useState(0);
-    const [submitting, setSubmitting] = useState(false);
+    const [requesting, setRequesting] = useState(false);
 
     const handleRequestQuote = async () => {
         if (!currentUser) {
-            showToast('Please sign in to request a quote', 'error');
+            showToast('Authentication required for quote request', 'error');
             return;
         }
 
-        setSubmitting(true);
+        setRequesting(true);
         try {
-            const quoteData = {
-                customerId: currentUser.uid,
-                customerName: currentUser.displayName || currentUser.email || 'Customer',
-                customerEmail: currentUser.email,
+            await addDoc(collection(db, 'quotes'), {
                 productId: product.id,
                 productName: product.name,
-                amount: Number(product.basePrice) || 0, // Initial estimate based on base price
-                totalCost: Number(product.basePrice) || 0,
+                clientEmail: currentUser.email,
+                clientName: currentUser.displayName || currentUser.email,
                 status: 'Pending',
                 createdAt: new Date().toISOString(),
-                type: 'Product Inquiry'
-            };
-
-            await addDoc(collection(db, 'quotes'), quoteData);
-            showToast('Quote request submitted successfully!', 'success');
-            setTimeout(() => {
-                onClose();
-            }, 1000);
+                isRead: false
+            });
+            showToast('Proposal request dispatched successfully', 'success');
+            onClose();
         } catch (error) {
-            console.error("Error creating quote:", error);
-            showToast('Failed to submit quote request', 'error');
+            console.error('Error requesting quote:', error);
+            showToast('Transmission failure in proposal request', 'error');
         } finally {
-            setSubmitting(false);
+            setRequesting(false);
         }
     };
 
     return (
-        <div className="fixed inset-0 bg-space-black/90 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in">
-            <div className="glass-panel w-full max-w-4xl max-h-[90vh] overflow-y-auto rounded-2xl border border-neon-blue/20">
-                {/* Header */}
-                <div className="sticky top-0 bg-space-black/80 backdrop-blur-md border-b border-white/10 px-6 py-4 flex justify-between items-center z-10">
-                    <h2 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-neon-blue to-neon-purple text-glow">{product.name}</h2>
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+            <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-xl animate-fade-in" onClick={onClose} />
+
+            <GlassCard
+                className="w-full max-w-4xl relative z-10 animate-zoom-in bg-white/95 border-white shadow-[0_32px_64px_-12px_rgba(0,0,0,0.3)] p-0 overflow-hidden max-h-[90vh] flex flex-col"
+                onClick={(e) => e.stopPropagation()}
+            >
+                {/* Close Button */}
+                <button
+                    onClick={onClose}
+                    className="absolute top-6 right-6 z-20 w-12 h-12 flex items-center justify-center rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 text-slate-500 hover:bg-slate-950 hover:text-white hover:rotate-90 transition-all duration-500 shadow-premium"
+                >
+                    <X className="w-5 h-5" />
+                </button>
+
+                <div className="flex-1 overflow-y-auto overflow-x-hidden custom-scrollbar">
+                    <div className="flex flex-col md:flex-row">
+                        {/* Visual Asset Container */}
+                        <div className="w-full md:w-1/2 relative h-[400px] md:h-auto group">
+                            <img
+                                src={product.images?.[0] || 'https://images.unsplash.com/photo-1510563800743-aed236490d08?q=80&w=2070&auto=format&fit=crop'}
+                                alt={product.name}
+                                className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110"
+                            />
+                            <div className="absolute inset-0 bg-gradient-to-r from-transparent to-white/10 pointer-events-none" />
+                            <div className="absolute top-8 left-8">
+                                <span className="px-4 py-1.5 bg-slate-950/40 backdrop-blur-xl text-white rounded-xl text-[10px] font-black uppercase tracking-widest border border-white/10 shadow-glow-sm">
+                                    {product.category || 'Architecture'} Grade
+                                </span>
+                            </div>
+                        </div>
+
+                        {/* Inventory Specification Content */}
+                        <div className="w-full md:w-1/2 p-10 md:p-14 space-y-8 animate-fade-in-right">
+                            <div className="space-y-4">
+                                <div className="flex items-center gap-2">
+                                    <Sparkles className="w-4 h-4 text-premium-purple" />
+                                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em]">Excellence Standard</span>
+                                </div>
+                                <h2 className="text-4xl md:text-5xl font-black text-slate-950 leading-tight tracking-tight">
+                                    {product.name}
+                                </h2>
+                                <div className="flex items-center gap-4">
+                                    <div className="flex items-baseline gap-1">
+                                        <IndianRupee className="w-5 h-5 text-slate-950" />
+                                        <span className="text-4xl font-black text-slate-950 tabular-nums">{product.basePrice.toLocaleString()}</span>
+                                        <span className="text-xs font-black text-slate-400 uppercase tracking-widest ml-1">/ SQ FT</span>
+                                    </div>
+                                    <div className="h-8 w-[1px] bg-slate-100 mx-2"></div>
+                                    <div className="flex flex-col">
+                                        <div className="flex items-center gap-1 text-emerald-500">
+                                            <ShieldCheck className="w-3 h-3" />
+                                            <span className="text-[10px] font-black uppercase tracking-widest leading-none">High-Security<br />Certified</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="space-y-3">
+                                <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] flex items-center gap-2">
+                                    <Layers className="w-3 h-3" /> Narrative & Context
+                                </h3>
+                                <p className="text-slate-600 font-medium leading-relaxed text-lg italic">
+                                    "{product.description}"
+                                </p>
+                            </div>
+
+                            {/* Expert Features */}
+                            {product.features && product.features.length > 0 && (
+                                <div className="space-y-4">
+                                    <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] flex items-center gap-2">
+                                        <Zap className="w-3 h-3" /> Performance Traits
+                                    </h3>
+                                    <div className="grid grid-cols-1 gap-3">
+                                        {product.features.map((feature, idx) => (
+                                            <div key={idx} className="flex items-center gap-3 p-3 bg-slate-50/50 rounded-2xl border border-slate-100/50 group/item hover:bg-white hover:shadow-card transition-all">
+                                                <div className="w-8 h-8 rounded-xl bg-white flex items-center justify-center border border-slate-100 group-hover/item:border-premium-purple transition-all">
+                                                    <CheckCircle className="w-4 h-4 text-emerald-500" />
+                                                </div>
+                                                <span className="text-sm font-bold text-slate-700 tracking-tight">{feature}</span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Technical Specifications */}
+                            {product.specifications && (
+                                <div className="space-y-4">
+                                    <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] flex items-center gap-2">
+                                        <Ruler className="w-3 h-3" /> Technical Datasheet
+                                    </h3>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        {Object.entries(product.specifications).map(([key, value]) => (
+                                            <div key={key} className="p-4 bg-slate-50/50 rounded-2xl border border-slate-100/50">
+                                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">{key}</p>
+                                                <p className="text-sm font-black text-slate-900">{value}</p>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+
+                {/* Secure Engagement Bar */}
+                <div className="p-10 bg-slate-50 border-t border-slate-100 flex flex-col sm:flex-row gap-4 relative">
+                    <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 w-16 h-1 bg-slate-200 rounded-full" />
                     <button
                         onClick={onClose}
-                        className="p-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
+                        className="flex-1 py-5 px-8 bg-white border border-slate-200 text-slate-500 rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-slate-100 transition-all active:scale-95"
                     >
-                        <X className="w-6 h-6" />
+                        Dismiss Review
                     </button>
+                    <PremiumButton
+                        onClick={handleRequestQuote}
+                        loading={requesting}
+                        className="flex-[2] py-5 text-slate-950 !shadow-glow font-black uppercase tracking-[0.2em] text-xs"
+                        icon={ArrowRight}
+                    >
+                        Initialize Proposal Request
+                    </PremiumButton>
                 </div>
-
-                {/* Content */}
-                <div className="p-6 space-y-8">
-                    {/* Image Gallery */}
-                    <div className="space-y-4">
-                        <div className="relative h-96 bg-space-black/50 rounded-xl overflow-hidden border border-white/5">
-                            <img
-                                src={product.images?.[currentImageIndex] || 'https://via.placeholder.com/800x600'}
-                                alt={product.name}
-                                className="w-full h-full object-cover"
-                            />
-                        </div>
-                        {product.images?.length > 1 && (
-                            <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-neon-blue/20 scrollbar-track-transparent">
-                                {product.images.map((image, index) => (
-                                    <button
-                                        key={index}
-                                        onClick={() => setCurrentImageIndex(index)}
-                                        className={`flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden border-2 transition-all duration-300 ${currentImageIndex === index ? 'border-neon-blue shadow-neon scale-105' : 'border-white/10 hover:border-white/30'
-                                            }`}
-                                    >
-                                        <img src={image} alt={`${product.name} ${index + 1}`} className="w-full h-full object-cover" />
-                                    </button>
-                                ))}
-                            </div>
-                        )}
-                    </div>
-
-                    {/* Price & Category */}
-                    <div className="flex items-center justify-between p-4 rounded-xl bg-white/5 border border-white/10">
-                        <div className="flex items-center gap-2 text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-neon-blue to-neon-purple text-glow">
-                            <IndianRupee className="w-8 h-8 text-neon-blue" />
-                            {product.basePrice}
-                            <span className="text-lg text-gray-400 font-normal">/sq ft</span>
-                        </div>
-                        <span className="badge badge-info text-base shadow-neon">{product.category}</span>
-                    </div>
-
-                    {/* Description */}
-                    <div>
-                        <h3 className="text-lg font-bold text-white mb-2 flex items-center gap-2">
-                            <span className="w-1 h-6 bg-neon-blue rounded-full shadow-neon"></span>
-                            Description
-                        </h3>
-                        <p className="text-gray-300 leading-relaxed pl-3">{product.description}</p>
-                    </div>
-
-                    {/* Specifications */}
-                    <div>
-                        <h3 className="text-lg font-bold text-white mb-3 flex items-center gap-2">
-                            <span className="w-1 h-6 bg-neon-purple rounded-full shadow-neon-purple"></span>
-                            Specifications
-                        </h3>
-                        <div className="grid grid-cols-2 gap-4">
-                            {Object.entries(product.specifications || {}).map(([key, value]) => (
-                                <div key={key} className="bg-white/5 border border-white/10 p-4 rounded-xl hover:border-neon-blue/30 transition-colors">
-                                    <p className="text-sm text-neon-blue capitalize mb-1">{key.replace(/([A-Z])/g, ' $1').trim()}</p>
-                                    <p className="text-base font-medium text-white">{value}</p>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-
-                    {/* Installation Time */}
-                    <div className="flex items-center gap-3 text-gray-300 bg-white/5 p-4 rounded-xl border border-white/10">
-                        <Clock className="w-6 h-6 text-neon-purple animate-pulse" />
-                        <span className="font-medium text-white">Installation Time:</span>
-                        <span>{product.installationTime}</span>
-                    </div>
-
-                    {/* Property Types */}
-                    <div>
-                        <h3 className="text-lg font-bold text-white mb-3">Suitable Property Types</h3>
-                        <div className="flex flex-wrap gap-2">
-                            {product.propertyTypes?.map((type, index) => (
-                                <span key={index} className="px-3 py-1 rounded-full bg-white/5 border border-white/10 text-gray-300 text-sm">
-                                    {type}
-                                </span>
-                            ))}
-                        </div>
-                    </div>
-
-                    {/* Features */}
-                    <div>
-                        <h3 className="text-lg font-bold text-white mb-3">Key Features</h3>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                            {product.features?.map((feature, index) => (
-                                <div key={index} className="flex items-center gap-3 p-3 rounded-lg hover:bg-white/5 transition-colors">
-                                    <div className="w-6 h-6 rounded-full bg-green-500/20 flex items-center justify-center">
-                                        <CheckCircle className="w-4 h-4 text-green-400" />
-                                    </div>
-                                    <span className="text-gray-300">{feature}</span>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-
-                    {/* Request Quote Button */}
-                    <div className="pt-6 border-t border-white/10">
-                        <button
-                            onClick={handleRequestQuote}
-                            disabled={submitting}
-                            className="w-full btn btn-primary py-4 text-lg flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed group relative overflow-hidden"
-                        >
-                            <div className="absolute inset-0 bg-gradient-to-r from-neon-blue/20 to-neon-purple/20 translate-x-[-100%] group-hover:translate-x-100 transition-transform duration-1000"></div>
-                            {submitting ? (
-                                <>
-                                    <Loader className="w-6 h-6 animate-spin" />
-                                    <span className="text-glow">Submitting Request...</span>
-                                </>
-                            ) : (
-                                <>
-                                    <Package className="w-6 h-6 group-hover:scale-110 transition-transform duration-300" />
-                                    <span className="text-glow">Request Quote</span>
-                                </>
-                            )}
-                        </button>
-                    </div>
-                </div>
-            </div>
+            </GlassCard>
         </div>
     );
 };

@@ -1,392 +1,394 @@
 import React, { useState, useEffect } from 'react';
-import { FileText, Plus, Search, Filter, Eye, Check, X, Pencil, Trash2, Clock, AlertCircle, CheckCircle } from 'lucide-react';
-import { collection, getDocs, doc, updateDoc, addDoc, deleteDoc } from 'firebase/firestore';
+import { FileText, Search, Check, X, Clock, Filter, Sparkles, IndianRupee, Calendar, User, Mail, ArrowRight, Edit, RotateCcw } from 'lucide-react';
+import { collection, onSnapshot, doc, updateDoc } from 'firebase/firestore';
 import { db } from '../../config/firebase';
 import { useToast } from '../common/Toast';
 import LoadingSpinner from '../common/LoadingSpinner';
+import GlassCard from '../common/GlassCard';
+import AnimatedBackground from '../common/AnimatedBackground';
+import PremiumButton from '../common/PremiumButton';
 
 const Quotes = () => {
     const [quotes, setQuotes] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
+    const [statusFilter, setStatusFilter] = useState('All');
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+    const [editingQuote, setEditingQuote] = useState(null);
     const { showToast } = useToast();
 
-    // Modal State
-    const [isModalOpen, setIsModalOpen] = useState(false);
-    const [isEditing, setIsEditing] = useState(false);
-    const [currentQuoteId, setCurrentQuoteId] = useState(null);
-    const [formData, setFormData] = useState({
-        customerName: '',
-        customerEmail: '',
-        amount: '',
-        status: 'Pending',
-        description: ''
-    });
-
     useEffect(() => {
-        fetchQuotes();
-    }, []);
-
-    const fetchQuotes = async () => {
-        try {
-            const querySnapshot = await getDocs(collection(db, 'quotes'));
-            const quotesData = querySnapshot.docs.map(doc => ({
+        setLoading(true);
+        const unsubscribe = onSnapshot(collection(db, 'quotes'), (snap) => {
+            const quotesData = snap.docs.map(doc => ({
                 id: doc.id,
                 ...doc.data()
             }));
-            // Sort by date descending (newest first)
-            quotesData.sort((a, b) => {
-                const dateA = a.createdAt ? new Date(a.createdAt) : new Date(0);
-                const dateB = b.createdAt ? new Date(b.createdAt) : new Date(0);
+            setQuotes(quotesData.sort((a, b) => {
+                const dateA = a.createdAt ? new Date(a.createdAt) : 0;
+                const dateB = b.createdAt ? new Date(b.createdAt) : 0;
                 return dateB - dateA;
-            });
-            setQuotes(quotesData);
-        } catch (error) {
+            }));
+            setLoading(false);
+        }, (error) => {
             console.error("Error fetching quotes:", error);
             showToast('Failed to fetch quotes', 'error');
-        } finally {
             setLoading(false);
-        }
-    };
+        });
 
-    // --- CRUD Operations ---
+        return () => unsubscribe();
+    }, []);
 
-    // 1. CREATE & UPDATE
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        setLoading(true);
-        try {
-            const quoteData = {
-                customerName: formData.customerName,
-                customerEmail: formData.customerEmail,
-                amount: Number(formData.amount),
-                totalCost: Number(formData.amount), // Normalize field name
-                status: formData.status,
-                description: formData.description,
-                updatedAt: new Date().toISOString()
-            };
-
-            if (isEditing) {
-                // Update
-                await updateDoc(doc(db, 'quotes', currentQuoteId), quoteData);
-                showToast('Quote updated successfully', 'success');
-            } else {
-                // Create
-                quoteData.createdAt = new Date().toISOString();
-                await addDoc(collection(db, 'quotes'), quoteData);
-                showToast('Quote created successfully', 'success');
-            }
-            closeModal();
-            fetchQuotes();
-        } catch (error) {
-            console.error("Error saving quote:", error);
-            showToast('Failed to save quote', 'error');
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    // 2. DELETE
-    const handleDelete = async (id) => {
-        if (!window.confirm('Are you sure you want to delete this quote? This action cannot be undone.')) {
-            return;
-        }
-        try {
-            await deleteDoc(doc(db, 'quotes', id));
-            showToast('Quote deleted successfully', 'success');
-            fetchQuotes(); // Refresh list
-        } catch (error) {
-            console.error("Error deleting quote:", error);
-            showToast('Failed to delete quote', 'error');
-        }
-    };
-
-    // 3. UPDATE STATUS (Quick Action)
     const handleUpdateStatus = async (id, newStatus) => {
         try {
             await updateDoc(doc(db, 'quotes', id), {
                 status: newStatus,
                 updatedAt: new Date().toISOString()
             });
-            showToast(`Quote ${newStatus} successfully`, 'success');
-            fetchQuotes();
+            showToast(`Quote ${newStatus.toLowerCase()} successfully`, 'success');
         } catch (error) {
-            console.error("Error updating quote status:", error);
+            console.error("Error updating status:", error);
             showToast('Failed to update status', 'error');
         }
     };
 
-    // --- Modal Handlers ---
-    const openCreateModal = () => {
-        setFormData({
-            customerName: '',
-            customerEmail: '',
-            amount: '',
-            status: 'Pending',
-            description: ''
-        });
-        setIsEditing(false);
-        setIsModalOpen(true);
+    const handleUpdateQuote = async (e) => {
+        e.preventDefault();
+        try {
+            const quoteRef = doc(db, 'quotes', editingQuote.id);
+            await updateDoc(quoteRef, {
+                productName: editingQuote.productName,
+                estimatedCost: Number(editingQuote.estimatedCost || editingQuote.totalCost),
+                area: Number(editingQuote.area),
+                notes: editingQuote.notes || '',
+                updatedAt: new Date().toISOString()
+            });
+            showToast('Proposal details synchronized successfully', 'success');
+            setIsEditModalOpen(false);
+            setEditingQuote(null);
+        } catch (error) {
+            console.error("Error updating quote:", error);
+            showToast('Failed to synchronize proposal details', 'error');
+        }
     };
-
-    const openEditModal = (quote) => {
-        setFormData({
-            customerName: quote.customerName || quote.customer || '',
-            customerEmail: quote.customerEmail || '',
-            amount: quote.totalCost || quote.amount || '',
-            status: quote.status || 'Pending',
-            description: quote.description || ''
-        });
-        setCurrentQuoteId(quote.id);
-        setIsEditing(true);
-        setIsModalOpen(true);
-    };
-
-    const closeModal = () => {
-        setIsModalOpen(false);
-        setFormData({ customerName: '', customerEmail: '', amount: '', status: 'Pending', description: '' });
-    };
-
-
-    const filteredQuotes = quotes.filter(quote =>
-        quote.customerName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        quote.customer?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        quote.id?.toLowerCase().includes(searchTerm.toLowerCase())
-    );
 
     const getStatusStyle = (status) => {
         switch (status) {
-            case 'Approved': return 'bg-green-500/10 text-green-400 border-green-500/20 shadow-[0_0_15px_rgba(74,222,128,0.3)]';
-            case 'Completed': return 'bg-neon-blue/10 text-neon-blue border-neon-blue/20 shadow-[0_0_15px_rgba(0,243,255,0.3)]';
-            case 'In Progress': return 'bg-blue-500/10 text-blue-400 border-blue-500/20 shadow-[0_0_15px_rgba(96,165,250,0.3)]';
-            case 'Rejected': return 'bg-red-500/10 text-red-400 border-red-500/20 shadow-[0_0_15px_rgba(248,113,113,0.3)]';
-            default: return 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20 shadow-[0_0_15px_rgba(250,204,21,0.3)]';
+            case 'Approved':
+                return 'bg-emerald-500/10 text-emerald-500 border-emerald-500/30';
+            case 'Pending':
+                return 'bg-amber-500/10 text-amber-500 border-amber-500/30';
+            case 'Rejected':
+                return 'bg-error-500/10 text-error-500 border-error-500/30';
+            default:
+                return 'bg-slate-500/10 text-slate-500 border-slate-500/30';
         }
     };
 
-    const getStatusIcon = (status) => {
-        switch (status) {
-            case 'Approved': return <CheckCircle className="w-3 h-3 mr-1" />;
-            case 'Completed': return <CheckCircle className="w-3 h-3 mr-1" />;
-            case 'Rejected': return <AlertCircle className="w-3 h-3 mr-1" />;
-            default: return <Clock className="w-3 h-3 mr-1" />;
-        }
-    };
+    const filteredQuotes = quotes.filter(quote => {
+        const matchesSearch =
+            quote.customerName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            quote.clientEmail?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            quote.productName?.toLowerCase().includes(searchTerm.toLowerCase());
+        const matchesStatus = statusFilter === 'All' || quote.status === statusFilter;
+        return matchesSearch && matchesStatus;
+    });
 
-    if (loading && !isModalOpen) return <LoadingSpinner text="Retrieving Quotes..." />;
+    if (loading) return <LoadingSpinner text="Reviewing premium proposals..." />;
 
     return (
-        <div className="space-y-6 animate-fade-in">
-            {/* Header */}
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                <div>
-                    <h1 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-neon-blue to-neon-purple text-glow">
-                        Quotes & Proposals
-                    </h1>
-                    <p className="text-gray-400 mt-1">Manage customer requests and estimations</p>
-                </div>
-                <button
-                    onClick={openCreateModal}
-                    className="btn btn-primary flex items-center gap-2 group"
-                >
-                    <Plus className="w-5 h-5 group-hover:rotate-90 transition-transform duration-300" />
-                    <span>Create Proposal</span>
-                </button>
-            </div>
+        <div className="space-y-8 relative">
+            <AnimatedBackground />
 
-            {/* Main Content Card */}
-            <div className="glass-panel rounded-2xl border border-white/10 overflow-hidden shadow-neon">
-                {/* Search Bar */}
-                <div className="p-6 border-b border-white/10 flex gap-4">
-                    <div className="relative flex-1 max-w-md group">
-                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            <Search className="h-5 w-5 text-gray-500 group-focus-within:text-neon-blue transition-colors" />
-                        </div>
-                        <input
-                            type="text"
-                            placeholder="Search quotes by ID or customer..."
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                            className="input pl-10 bg-white/5 border-white/10 text-white placeholder-gray-500 focus:border-neon-blue focus:shadow-neon w-full transition-all duration-300"
-                        />
+            {/* Header */}
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div className="animate-fade-in">
+                    <h1 className="text-4xl font-black text-slate-950 flex items-center gap-3">
+                        <FileText className="w-10 h-10 text-premium-cyan animate-float" />
+                        <span className="gradient-text">Quote Proposals</span>
+                    </h1>
+                    <p className="text-slate-600 mt-2 font-medium">Review and validate high-tier fencing requests</p>
+                </div>
+                <div className="flex items-center gap-3 animate-fade-in" style={{ animationDelay: '100ms' }}>
+                    <div className="px-4 py-2 bg-white shadow-premium rounded-xl flex items-center gap-2 border border-slate-100">
+                        <Clock className="w-5 h-5 text-amber-500" />
+                        <span className="text-sm font-bold text-slate-700">
+                            {quotes.filter(q => q.status === 'Pending').length} Pending Review
+                        </span>
                     </div>
                 </div>
+            </div>
 
-                {/* Table */}
+            {/* Filters */}
+            <GlassCard className="animate-fade-in-up" style={{ animationDelay: '200ms' }}>
+                <div className="flex flex-col lg:flex-row gap-6 items-center">
+                    <div className="relative flex-1 group w-full">
+                        <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-slate-400 group-focus-within:text-premium-cyan transition-colors" />
+                        <input
+                            type="text"
+                            placeholder="Identify quote by customer or product..."
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            className="w-full bg-slate-50 border border-slate-200 rounded-2xl py-4 pl-12 pr-4 text-slate-950 placeholder-slate-400 focus:outline-none focus:ring-4 focus:ring-premium-cyan/10 focus:border-premium-cyan transition-all font-medium"
+                        />
+                    </div>
+                    <div className="flex flex-wrap items-center gap-2 w-full lg:w-auto">
+                        {['All', 'Pending', 'Approved', 'Rejected'].map((status) => (
+                            <button
+                                key={status}
+                                onClick={() => setStatusFilter(status)}
+                                className={`flex-1 lg:flex-none px-6 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${statusFilter === status
+                                    ? 'bg-slate-950 text-white shadow-glow'
+                                    : 'bg-white text-slate-400 hover:text-slate-600 border border-slate-100'
+                                    }`}
+                            >
+                                {status}
+                            </button>
+                        ))}
+                    </div>
+                </div>
+            </GlassCard>
+
+            {/* Quotes Display */}
+            <GlassCard className="animate-fade-in-up p-0 overflow-hidden" style={{ animationDelay: '300ms' }}>
                 <div className="overflow-x-auto">
-                    <table className="w-full text-left">
-                        <thead className="bg-white/5 border-b border-white/10">
+                    <table className="w-full">
+                        <thead className="bg-slate-50/50 border-b border-slate-200">
                             <tr>
-                                <th className="px-6 py-4 text-xs font-semibold text-neon-blue uppercase tracking-wider">Client Details</th>
-                                <th className="px-6 py-4 text-xs font-semibold text-neon-purple uppercase tracking-wider">Date Issued</th>
-                                <th className="px-6 py-4 text-xs font-semibold text-green-400 uppercase tracking-wider">Total Value</th>
-                                <th className="px-6 py-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">Status</th>
-                                <th className="px-6 py-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">Actions</th>
+                                <th className="px-8 py-5 text-left text-[10px] font-black text-slate-500 uppercase tracking-widest">Client Identity</th>
+                                <th className="px-8 py-5 text-left text-[10px] font-black text-slate-500 uppercase tracking-widest">Selected Solution</th>
+                                <th className="px-8 py-5 text-left text-[10px] font-black text-slate-500 uppercase tracking-widest">Valuation</th>
+                                <th className="px-8 py-5 text-left text-[10px] font-black text-slate-500 uppercase tracking-widest">Timestamp</th>
+                                <th className="px-8 py-5 text-left text-[10px] font-black text-slate-500 uppercase tracking-widest">Validation</th>
+                                <th className="px-8 py-5 text-right text-[10px] font-black text-slate-500 uppercase tracking-widest">Operations</th>
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-white/5">
+                        <tbody className="divide-y divide-slate-100">
                             {filteredQuotes.length > 0 ? (
-                                filteredQuotes.map((quote) => (
-                                    <tr key={quote.id} className="group hover:bg-white/5 transition-colors duration-200">
-                                        <td className="px-6 py-4">
-                                            <div>
-                                                <span className="font-bold text-white group-hover:text-neon-blue transition-colors block">
-                                                    {quote.customerName || quote.customer || 'Unknown User'}
-                                                </span>
-                                                <span className="text-xs text-gray-500 font-mono">ID: {quote.id.slice(0, 8)}</span>
+                                filteredQuotes.map((quote, index) => (
+                                    <tr
+                                        key={quote.id}
+                                        className="group hover:bg-slate-50/50 transition-colors animate-fade-in-up"
+                                        style={{ animationDelay: `${index * 50}ms` }}
+                                    >
+                                        <td className="px-8 py-6">
+                                            <div className="flex items-center gap-4">
+                                                <div className="w-12 h-12 bg-gradient-to-tr from-slate-100 to-white rounded-xl flex items-center justify-center border border-slate-200 group-hover:scale-110 transition-transform">
+                                                    <User className="w-5 h-5 text-slate-400" />
+                                                </div>
+                                                <div>
+                                                    <p className="font-black text-slate-950 group-hover:text-premium-cyan transition-colors">
+                                                        {quote.customerName || quote.clientName || 'Anonymous User'}
+                                                    </p>
+                                                    <div className="flex items-center gap-2 mt-0.5">
+                                                        <Mail className="w-3 h-3 text-slate-300" />
+                                                        <p className="text-[10px] text-slate-400 font-bold tracking-tight">{quote.clientEmail}</p>
+                                                    </div>
+                                                </div>
                                             </div>
                                         </td>
-                                        <td className="px-6 py-4 text-gray-400">
-                                            {quote.createdAt ? new Date(quote.createdAt).toLocaleDateString() : 'N/A'}
+                                        <td className="px-8 py-6">
+                                            <div className="space-y-1">
+                                                <p className="text-sm font-black text-slate-800">{quote.productName || 'Custom Specification'}</p>
+                                                {quote.area && (
+                                                    <div className="flex items-center gap-1.5">
+                                                        <Sparkles className="w-3 h-3 text-premium-cyan" />
+                                                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-wider">{quote.area} SQ FT Precision</p>
+                                                    </div>
+                                                )}
+                                            </div>
                                         </td>
-                                        <td className="px-6 py-4 font-mono text-green-400 text-lg">
-                                            ₹{(quote.totalCost || quote.amount || 0).toLocaleString()}
+                                        <td className="px-8 py-6">
+                                            <div className="flex flex-col">
+                                                <div className="flex items-center gap-1">
+                                                    <IndianRupee className="w-4 h-4 text-slate-950" />
+                                                    <span className="text-xl font-black text-slate-950 tabular-nums">
+                                                        {(quote.estimatedCost || quote.totalCost || 0).toLocaleString()}
+                                                    </span>
+                                                </div>
+                                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.1em] mt-1">Net Valuation</p>
+                                            </div>
                                         </td>
-                                        <td className="px-6 py-4">
-                                            <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium border ${getStatusStyle(quote.status)}`}>
-                                                {getStatusIcon(quote.status)}
+                                        <td className="px-8 py-6">
+                                            <div className="flex items-center gap-2 text-slate-600">
+                                                <Calendar className="w-4 h-4 text-slate-300" />
+                                                <span className="text-xs font-bold font-mono">
+                                                    {quote.createdAt ? new Date(quote.createdAt).toLocaleDateString(undefined, { day: '2-digit', month: 'short', year: 'numeric' }) : 'N/A'}
+                                                </span>
+                                            </div>
+                                        </td>
+                                        <td className="px-8 py-6">
+                                            <span className={`inline-flex items-center px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border ${getStatusStyle(quote.status)} shadow-sm`}>
                                                 {quote.status}
                                             </span>
                                         </td>
-                                        <td className="px-6 py-4">
-                                            <div className="flex gap-2">
-                                                {/* Edit Button */}
+                                        <td className="px-8 py-6">
+                                            <div className="flex gap-2 justify-end opacity-0 group-hover:opacity-100 transition-all transform translate-x-2 group-hover:translate-x-0">
                                                 <button
-                                                    onClick={() => openEditModal(quote)}
-                                                    className="p-2 text-neon-blue hover:bg-neon-blue/10 rounded-lg transition-colors group/edit"
-                                                    title="Edit Quote"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        setEditingQuote(quote);
+                                                        setIsEditModalOpen(true);
+                                                    }}
+                                                    className="w-10 h-10 flex items-center justify-center bg-white text-premium-cyan rounded-xl shadow-premium border border-slate-100 hover:bg-premium-cyan hover:text-white hover:glow-sm transition-all active:scale-90"
+                                                    title="Edit Details"
                                                 >
-                                                    <Pencil className="w-4 h-4" />
+                                                    <Edit className="w-4 h-4" />
                                                 </button>
 
-                                                {/* Delete Button */}
-                                                <button
-                                                    onClick={() => handleDelete(quote.id)}
-                                                    className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-colors group/del"
-                                                    title="Delete Quote"
-                                                >
-                                                    <Trash2 className="w-4 h-4" />
-                                                </button>
-
-                                                {/* Quick Approve/Reject (Only for Pending) */}
-                                                {quote.status === 'Pending' && (
-                                                    <>
-                                                        <button
-                                                            onClick={() => handleUpdateStatus(quote.id, 'Approved')}
-                                                            title="Approve"
-                                                            className="p-2 text-green-400 hover:bg-green-400/10 rounded-lg transition-colors hover:scale-110"
-                                                        >
-                                                            <Check className="w-4 h-4" />
-                                                        </button>
-                                                        <button
-                                                            onClick={() => handleUpdateStatus(quote.id, 'Rejected')}
-                                                            title="Reject"
-                                                            className="p-2 text-gray-500 hover:text-red-400 hover:bg-red-400/10 rounded-lg transition-colors hover:scale-110"
-                                                        >
-                                                            <X className="w-4 h-4" />
-                                                        </button>
-                                                    </>
+                                                {quote.status !== 'Approved' && (
+                                                    <button
+                                                        onClick={() => handleUpdateStatus(quote.id, 'Approved')}
+                                                        className="w-10 h-10 flex items-center justify-center bg-white text-emerald-500 rounded-xl shadow-premium border border-slate-100 hover:bg-emerald-500 hover:text-white hover:glow-success transition-all active:scale-90"
+                                                        title="Authorize Proposal"
+                                                    >
+                                                        <Check className="w-5 h-5" />
+                                                    </button>
                                                 )}
+
+                                                {quote.status !== 'Rejected' && (
+                                                    <button
+                                                        onClick={() => handleUpdateStatus(quote.id, 'Rejected')}
+                                                        className="w-10 h-10 flex items-center justify-center bg-white text-error-500 rounded-xl shadow-premium border border-slate-100 hover:bg-error-500 hover:text-white hover:glow-error transition-all active:scale-90"
+                                                        title="Dismiss Proposal"
+                                                    >
+                                                        <X className="w-5 h-5" />
+                                                    </button>
+                                                )}
+
+                                                {quote.status !== 'Pending' && (
+                                                    <button
+                                                        onClick={() => handleUpdateStatus(quote.id, 'Pending')}
+                                                        className="w-10 h-10 flex items-center justify-center bg-white text-slate-400 rounded-xl shadow-premium border border-slate-100 hover:bg-slate-900 hover:text-white transition-all active:scale-90"
+                                                        title="Reset to Pending"
+                                                    >
+                                                        <RotateCcw className="w-4 h-4" />
+                                                    </button>
+                                                )}
+
+                                                <button className="w-10 h-10 flex items-center justify-center bg-white text-slate-400 rounded-xl shadow-premium border border-slate-100 hover:text-premium-cyan transition-all">
+                                                    <ArrowRight className="w-5 h-5" />
+                                                </button>
                                             </div>
                                         </td>
                                     </tr>
                                 ))
                             ) : (
                                 <tr>
-                                    <td colSpan="5" className="px-6 py-12 text-center text-gray-500">
-                                        <FileText className="w-12 h-12 mb-4 mx-auto opacity-50" />
-                                        <p className="text-lg">No quotes found.</p>
+                                    <td colSpan="6" className="px-8 py-20 text-center">
+                                        <div className="w-20 h-20 bg-slate-50 rounded-3xl flex items-center justify-center mx-auto mb-6 text-slate-200">
+                                            <FileText className="w-10 h-10" />
+                                        </div>
+                                        <h3 className="text-xl font-black text-slate-900 mb-2">Null Proposals Detected</h3>
+                                        <p className="text-slate-500 font-medium">No quote requests match the current filtration set.</p>
+                                        <PremiumButton variant="outline" className="mt-8" onClick={() => { setSearchTerm(''); setStatusFilter('All'); }}>
+                                            Reset Filter Stack
+                                        </PremiumButton>
                                     </td>
                                 </tr>
                             )}
                         </tbody>
                     </table>
                 </div>
-            </div>
+            </GlassCard>
 
-            {/* Modal for Create/Edit */}
-            {isModalOpen && (
-                <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in">
-                    <div className="glass-panel w-full max-w-lg rounded-2xl border border-neon-blue/30 shadow-neon overflow-hidden animate-slide-in">
-                        <div className="p-6 border-b border-white/10 flex justify-between items-center bg-white/5">
-                            <h2 className="text-xl font-bold text-white">
-                                {isEditing ? 'Modify Proposal' : 'New Quote Proposal'}
-                            </h2>
-                            <button onClick={closeModal} className="text-gray-400 hover:text-white hover:rotate-90 transition-all duration-300">
-                                <X className="w-6 h-6" />
+            {/* Edit Quote Modal */}
+            {isEditModalOpen && editingQuote && (
+                <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 sm:p-6">
+                    <div
+                        className="absolute inset-0 bg-slate-950/40 backdrop-blur-md animate-fade-in"
+                        onClick={() => setIsEditModalOpen(false)}
+                    />
+
+                    <GlassCard
+                        className="relative w-full max-w-xl animate-zoom-in overflow-hidden !p-0 shadow-2xl border-white/20"
+                    >
+                        {/* Modal Header */}
+                        <div className="p-8 border-b border-white/10 flex items-center justify-between bg-gradient-to-r from-slate-900 to-slate-800">
+                            <div>
+                                <h3 className="text-2xl font-black text-white flex items-center gap-3">
+                                    <Edit className="w-6 h-6 text-premium-cyan" />
+                                    Refine Proposal
+                                </h3>
+                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">Refining Specs for ID: #{editingQuote.id.slice(0, 8)}</p>
+                            </div>
+                            <button
+                                onClick={() => setIsEditModalOpen(false)}
+                                className="p-2 hover:bg-white/10 rounded-xl transition-colors"
+                            >
+                                <X className="w-6 h-6 text-slate-400" />
                             </button>
                         </div>
 
-                        <form onSubmit={handleSubmit} className="p-6 space-y-5">
-                            <div>
-                                <label className="block text-sm font-medium text-gray-300 mb-1 ml-1">Customer Name</label>
+                        {/* Modal Body */}
+                        <form onSubmit={handleUpdateQuote} className="p-8 space-y-6 bg-slate-900/50">
+                            <div className="space-y-2">
+                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Selected Technical Solution</label>
                                 <input
                                     type="text"
-                                    value={formData.customerName}
-                                    onChange={(e) => setFormData({ ...formData, customerName: e.target.value })}
-                                    className="input w-full bg-black/20 border-white/10 focus:border-neon-blue focus:shadow-neon text-white placeholder-gray-600"
+                                    value={editingQuote.productName || ''}
+                                    onChange={(e) => setEditingQuote({ ...editingQuote, productName: e.target.value })}
+                                    className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-6 text-white focus:outline-none focus:ring-4 focus:ring-premium-cyan/10 focus:border-premium-cyan transition-all font-bold"
                                     required
-                                    placeholder="Enter customer name"
                                 />
                             </div>
 
-                            <div>
-                                <label className="block text-sm font-medium text-gray-300 mb-1 ml-1">Amount (INR)</label>
-                                <input
-                                    type="number"
-                                    value={formData.amount}
-                                    onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
-                                    className="input w-full bg-black/20 border-white/10 focus:border-green-400 focus:shadow-[0_0_10px_rgba(74,222,128,0.3)] text-white placeholder-gray-600"
-                                    required
-                                    placeholder="0.00"
-                                    min="0"
-                                />
+                            <div className="grid grid-cols-2 gap-6">
+                                <div className="space-y-2">
+                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Net Valuation (₹)</label>
+                                    <input
+                                        type="number"
+                                        value={editingQuote.estimatedCost || editingQuote.totalCost || 0}
+                                        onChange={(e) => setEditingQuote({ ...editingQuote, estimatedCost: e.target.value })}
+                                        className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-6 text-white focus:outline-none focus:ring-4 focus:ring-premium-cyan/10 focus:border-premium-cyan transition-all font-black text-lg tabular-nums"
+                                        required
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Project Scale (SQ FT)</label>
+                                    <input
+                                        type="number"
+                                        value={editingQuote.area || 0}
+                                        onChange={(e) => setEditingQuote({ ...editingQuote, area: e.target.value })}
+                                        className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-6 text-white focus:outline-none focus:ring-4 focus:ring-premium-cyan/10 focus:border-premium-cyan transition-all font-black text-lg"
+                                        required
+                                    />
+                                </div>
                             </div>
 
-                            <div>
-                                <label className="block text-sm font-medium text-gray-300 mb-1 ml-1">Status</label>
-                                <select
-                                    value={formData.status}
-                                    onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-                                    className="input w-full bg-black/20 border-white/10 focus:border-neon-purple focus:shadow-neon-purple text-white appearance-none"
-                                >
-                                    <option value="Pending" className="bg-gray-900">Pending</option>
-                                    <option value="Approved" className="bg-gray-900">Approved</option>
-                                    <option value="Rejected" className="bg-gray-900">Rejected</option>
-                                    <option value="Completed" className="bg-gray-900">Completed</option>
-                                </select>
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-medium text-gray-300 mb-1 ml-1">Notes / Description</label>
+                            <div className="space-y-2">
+                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Internal Intelligence Notes</label>
                                 <textarea
-                                    value={formData.description}
-                                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                                    className="input w-full h-24 resize-none bg-black/20 border-white/10 focus:border-neon-blue focus:shadow-neon text-white placeholder-gray-600"
-                                    placeholder="Optional notes..."
+                                    value={editingQuote.notes || ''}
+                                    onChange={(e) => setEditingQuote({ ...editingQuote, notes: e.target.value })}
+                                    className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-6 text-white focus:outline-none focus:ring-4 focus:ring-premium-cyan/10 focus:border-premium-cyan transition-all font-medium min-h-[120px] resize-none"
+                                    placeholder="Add assessment remarks..."
                                 />
                             </div>
 
-                            <div className="flex gap-3 pt-4">
+                            <div className="pt-4 flex gap-4">
                                 <button
                                     type="button"
-                                    onClick={closeModal}
-                                    className="flex-1 px-4 py-3 border border-white/10 text-gray-300 rounded-xl hover:bg-white/10 hover:text-white transition-colors font-medium"
+                                    onClick={() => setIsEditModalOpen(false)}
+                                    className="flex-1 py-4 bg-white/5 text-slate-400 rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-white/10 transition-all active:scale-95"
                                 >
-                                    Cancel
+                                    Discard Changes
                                 </button>
-                                <button
+                                <PremiumButton
                                     type="submit"
-                                    className="flex-1 btn btn-primary flex items-center justify-center gap-2 group"
+                                    variant="primary"
+                                    className="flex-[2] py-4 text-slate-950 !shadow-glow"
+                                    icon={Check}
                                 >
-                                    <FileText className="w-4 h-4 group-hover:scale-110 transition-transform" />
-                                    {isEditing ? 'Update Quote' : 'Create Quote'}
-                                </button>
+                                    Synchronize Specs
+                                </PremiumButton>
                             </div>
                         </form>
-                    </div>
+                    </GlassCard>
                 </div>
             )}
+
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-premium-cyan/5 rounded-full blur-[150px] pointer-events-none -z-10 animate-blob"></div>
         </div>
     );
 };

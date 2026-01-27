@@ -33,7 +33,7 @@ const TermsConditions = () => {
                         </h1>
                     </div>
                     <p className="text-gray-400 text-lg leading-relaxed max-w-2xl">
-                        Welcome to Athanuramman Fencings. Please read these terms carefully before using our services.
+                        Welcome to Athanuramman Fencing. Please read these terms carefully before using our services.
                     </p>
                     <div className="mt-4 inline-flex items-center px-3 py-1 rounded-full bg-white/5 border border-white/10 text-sm text-gray-400">
                         <ClockIcon className="w-4 h-4 mr-2" />

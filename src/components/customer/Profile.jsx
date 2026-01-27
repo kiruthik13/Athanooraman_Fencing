@@ -2,9 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { db } from '../../config/firebase';
 import { useAuth } from '../../contexts/AuthContext';
-import { User, Mail, Phone, MapPin, Save, Shield, Calendar, Clock, Edit2 } from 'lucide-react';
+import { User, Mail, Phone, MapPin, Save, Calendar, Clock, Edit2, X, Sparkles, ShieldCheck, BadgeCheck, Globe, CreditCard } from 'lucide-react';
 import { useToast } from '../common/Toast';
 import LoadingSpinner from '../common/LoadingSpinner';
+import GlassCard from '../common/GlassCard';
+import AnimatedBackground from '../common/AnimatedBackground';
+import PremiumButton from '../common/PremiumButton';
 
 const Profile = () => {
     const { currentUser } = useAuth();
@@ -59,210 +62,234 @@ const Profile = () => {
                 location: userData.location || '',
                 updatedAt: new Date().toISOString()
             });
-            showToast('Profile updated successfully!', 'success');
+            showToast('Identity synchronized successfully', 'success');
             setIsEditing(false);
         } catch (error) {
             console.error('Error updating profile:', error);
-            showToast('Failed to update profile', 'error');
+            showToast('Identity synchronization failed', 'error');
         } finally {
             setSaving(false);
         }
     };
 
     if (loading) {
-        return <LoadingSpinner text="Loading profile..." />;
+        return <LoadingSpinner text="Authenticating identity parameters..." />;
     }
 
     return (
-        <div className="animate-fade-in max-w-4xl mx-auto pb-20">
+        <div className="space-y-12 relative pb-20">
+            <AnimatedBackground />
+
             {/* Header */}
-            <div className="mb-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                <div>
-                    <h2 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-neon-blue to-neon-purple text-glow">
-                        My Profile
-                    </h2>
-                    <p className="text-gray-400 mt-1">Manage your account information</p>
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 px-4">
+                <div className="animate-fade-in">
+                    <h1 className="text-4xl font-black text-slate-950 flex items-center gap-3">
+                        <User className="w-10 h-10 text-premium-purple animate-float" />
+                        <span className="gradient-text">Identity Hub</span>
+                    </h1>
+                    <p className="text-slate-400 mt-2 font-bold uppercase tracking-widest text-xs">Manage your architectural profile</p>
                 </div>
-                {!isEditing && (
-                    <button
+                {!isEditing ? (
+                    <PremiumButton
+                        variant="primary"
+                        icon={Edit2}
                         onClick={() => setIsEditing(true)}
-                        className="btn btn-primary flex items-center gap-2 group"
+                        className="animate-fade-in px-8 py-4 !shadow-glow"
                     >
-                        <Edit2 className="w-4 h-4 group-hover:scale-110 transition-transform" />
-                        <span>Edit Profile</span>
-                    </button>
+                        Modify Identity
+                    </PremiumButton>
+                ) : (
+                    <div className="flex gap-3 animate-fade-in">
+                        <button
+                            onClick={() => { setIsEditing(false); fetchUserData(); }}
+                            className="px-8 py-4 bg-white/50 backdrop-blur-md border border-slate-200 rounded-2xl font-black uppercase tracking-widest text-[10px] text-slate-500 hover:bg-white transition-all active:scale-95"
+                        >
+                            Cancel
+                        </button>
+                        <PremiumButton
+                            variant="primary"
+                            icon={Save}
+                            onClick={handleSave}
+                            loading={saving}
+                            className="px-8 py-4 !shadow-glow"
+                        >
+                            Sync Changes
+                        </PremiumButton>
+                    </div>
                 )}
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                {/* Left Column - Avatar & Info */}
-                <div className="lg:col-span-1 space-y-6">
-                    <div className="glass-panel p-6 rounded-2xl border border-white/10 flex flex-col items-center text-center relative overflow-hidden">
-                        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-neon-blue to-neon-purple"></div>
-                        <div className="w-24 h-24 bg-gradient-to-br from-neon-blue/20 to-neon-purple/20 rounded-full flex items-center justify-center mb-4 border border-white/10 shadow-neon">
-                            <User className="w-10 h-10 text-white" />
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
+                {/* Identity Card */}
+                <div className="lg:col-span-4 space-y-8 animate-fade-in-up" style={{ animationDelay: '100ms' }}>
+                    <GlassCard className="text-center py-10">
+                        <div className="relative w-32 h-32 mx-auto mb-8">
+                            <div className="absolute inset-0 bg-gradient-to-tr from-premium-purple to-premium-cyan rounded-3xl rotate-12 blur-lg opacity-20 animate-pulse"></div>
+                            <div className="relative w-full h-full bg-white rounded-3xl flex items-center justify-center border border-slate-100 shadow-premium overflow-hidden group">
+                                <div className="absolute inset-0 bg-slate-950/5 group-hover:bg-slate-950/10 transition-colors" />
+                                <User className="w-16 h-16 text-slate-200" />
+                                <div className="absolute bottom-0 right-0 w-8 h-8 bg-premium-cyan rounded-tl-2xl flex items-center justify-center shadow-glow-sm">
+                                    <BadgeCheck className="w-4 h-4 text-slate-950" />
+                                </div>
+                            </div>
                         </div>
-                        <h3 className="text-xl font-bold text-white mb-1">{userData.fullName || 'User'}</h3>
-                        <p className="text-gray-400 text-sm mb-4">{userData.email}</p>
-                        <span className="px-3 py-1 rounded-full bg-neon-blue/10 border border-neon-blue/20 text-neon-blue text-xs font-semibold uppercase tracking-wider">
-                            {userData.role}
-                        </span>
-                    </div>
 
-                    <div className="glass-panel p-6 rounded-2xl border border-white/10">
-                        <h4 className="flex items-center gap-2 text-gray-400 text-sm font-semibold uppercase tracking-wider mb-4">
-                            <Shield className="w-4 h-4" /> Account Details
-                        </h4>
-                        <div className="space-y-4">
-                            <div className="flex justify-between text-sm border-b border-white/5 pb-2">
-                                <span className="text-gray-500 ">Joined</span>
-                                <span className="text-gray-300">
-                                    {userData.createdAt ? new Date(userData.createdAt).toLocaleDateString() : 'N/A'}
+                        <h2 className="text-2xl font-black text-slate-950 mb-1">{userData.fullName || 'Architecture Client'}</h2>
+                        <p className="text-xs font-black text-slate-400 uppercase tracking-widest mb-6">{userData.email}</p>
+
+                        <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-slate-950 text-white rounded-full text-[10px] font-black uppercase tracking-widest shadow-glow">
+                            <Sparkles className="w-3 h-3 text-premium-cyan" />
+                            {userData.role || 'Elite Member'}
+                        </div>
+
+                        {/* Metadata Strip */}
+                        <div className="mt-10 pt-10 border-t border-slate-100 space-y-4">
+                            <div className="flex items-center justify-between p-4 bg-slate-50/50 rounded-2xl border border-slate-100/50 group hover:bg-white hover:shadow-card transition-all">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-8 h-8 rounded-xl bg-white flex items-center justify-center border border-slate-100 group-hover:border-premium-purple transition-all">
+                                        <Calendar className="w-4 h-4 text-premium-purple" />
+                                    </div>
+                                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Enrolled</span>
+                                </div>
+                                <span className="text-sm font-black text-slate-950">
+                                    {userData.createdAt ? new Date(userData.createdAt).toLocaleDateString('en-IN', { month: 'short', year: 'numeric' }) : 'Jan 2026'}
                                 </span>
                             </div>
-                            <div className="flex justify-between text-sm border-b border-white/5 pb-2">
-                                <span className="text-gray-500">Last Login</span>
-                                <span className="text-gray-300">
-                                    {userData.lastLogin ? new Date(userData.lastLogin).toLocaleDateString() : 'Today'}
-                                </span>
-                            </div>
-                            <div className="flex justify-between text-sm">
-                                <span className="text-gray-500">Status</span>
-                                <span className="text-green-400 flex items-center gap-1">
-                                    <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
-                                    Active
-                                </span>
+
+                            <div className="flex items-center justify-between p-4 bg-slate-50/50 rounded-2xl border border-slate-100/50 group hover:bg-white hover:shadow-card transition-all">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-8 h-8 rounded-xl bg-white flex items-center justify-center border border-slate-100 group-hover:border-premium-cyan transition-all">
+                                        <ShieldCheck className="w-4 h-4 text-premium-cyan" />
+                                    </div>
+                                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Trust Index</span>
+                                </div>
+                                <span className="text-sm font-black text-emerald-500 uppercase tracking-widest">Verified</span>
                             </div>
                         </div>
-                    </div>
+                    </GlassCard>
+
+                    {/* Security Quick Link */}
+                    <GlassCard className="p-1 group cursor-pointer hover:border-premium-purple/30 transition-all">
+                        <div className="p-6 bg-slate-50/50 rounded-[1.5rem] flex items-center justify-between">
+                            <div className="flex items-center gap-4">
+                                <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center border border-slate-100 group-hover:bg-premium-purple group-hover:text-white transition-all">
+                                    <BadgeCheck className="w-5 h-5" />
+                                </div>
+                                <div>
+                                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Two-Factor</p>
+                                    <p className="text-xs font-black text-slate-900">Security Parameters</p>
+                                </div>
+                            </div>
+                            <div className="w-8 h-8 rounded-full border border-slate-200 flex items-center justify-center group-hover:border-premium-purple group-hover:bg-premium-purple/5 transition-all">
+                                <Globe className="w-4 h-4 text-slate-300 group-hover:text-premium-purple" />
+                            </div>
+                        </div>
+                    </GlassCard>
                 </div>
 
-                {/* Right Column - Edit Form */}
-                <div className="lg:col-span-2">
-                    <div className="glass-panel p-8 rounded-2xl border border-white/10 relative">
-                        {isEditing && (
-                            <div className="absolute top-0 left-0 w-full h-full bg-neon-blue/5 pointer-events-none animate-pulse-slow"></div>
-                        )}
+                {/* Account Details Form */}
+                <div className="lg:col-span-8 animate-fade-in-up" style={{ animationDelay: '200ms' }}>
+                    <GlassCard className="h-full">
+                        <div className="flex items-center gap-4 mb-10 border-b border-slate-100 pb-8">
+                            <div className="w-12 h-12 bg-indigo-50 rounded-2xl flex items-center justify-center">
+                                <BadgeCheck className="w-6 h-6 text-indigo-600" />
+                            </div>
+                            <div>
+                                <h3 className="text-xl font-black text-slate-950">Profile Core</h3>
+                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">Managed account parameters</p>
+                            </div>
+                        </div>
 
-                        <div className="space-y-6 relative z-10">
-                            <h3 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
-                                <User className="w-5 h-5 text-neon-blue" />
-                                Personal Information
-                            </h3>
-
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                {/* Full Name */}
-                                <div className="space-y-2">
-                                    <label className="text-sm font-medium text-gray-400 ml-1">Full Name</label>
-                                    <div className="relative group">
-                                        <User className="absolute left-3 top-3 text-gray-500 group-focus-within:text-neon-blue transition-colors w-5 h-5" />
-                                        <input
-                                            type="text"
-                                            name="fullName"
-                                            value={userData.fullName}
-                                            onChange={handleChange}
-                                            disabled={!isEditing}
-                                            className="input pl-10 w-full bg-black/20 border-white/10 text-white placeholder-gray-600 focus:border-neon-blue disabled:opacity-50 disabled:cursor-not-allowed"
-                                            placeholder="Enter your full name"
-                                        />
-                                    </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+                            {/* Full Name */}
+                            <div className="space-y-3">
+                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Identity Display Name</label>
+                                <div className="relative group">
+                                    <User className="absolute left-6 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-300 group-focus-within:text-premium-purple transition-colors" />
+                                    <input
+                                        type="text"
+                                        name="fullName"
+                                        value={userData.fullName}
+                                        onChange={handleChange}
+                                        disabled={!isEditing}
+                                        className="w-full bg-slate-50/50 border border-slate-200 rounded-3xl py-5 pl-14 pr-6 text-slate-950 focus:outline-none focus:ring-4 focus:ring-premium-purple/10 focus:border-premium-purple transition-all font-bold group-hover:bg-white disabled:opacity-60 disabled:cursor-not-allowed"
+                                        placeholder="Full Name"
+                                    />
                                 </div>
+                            </div>
 
-                                {/* Email */}
-                                <div className="space-y-2">
-                                    <label className="text-sm font-medium text-gray-400 ml-1">Email Address</label>
-                                    <div className="relative">
-                                        <Mail className="absolute left-3 top-3 text-gray-500 w-5 h-5" />
-                                        <input
-                                            type="email"
-                                            value={userData.email}
-                                            disabled
-                                            className="input pl-10 w-full bg-white/5 border-white/5 text-gray-400 cursor-not-allowed"
-                                        />
-                                    </div>
-                                </div>
-
-                                {/* Phone */}
-                                <div className="space-y-2">
-                                    <label className="text-sm font-medium text-gray-400 ml-1">Phone Number</label>
-                                    <div className="relative group">
-                                        <Phone className="absolute left-3 top-3 text-gray-500 group-focus-within:text-neon-blue transition-colors w-5 h-5" />
-                                        <input
-                                            type="text"
-                                            name="phone"
-                                            value={userData.phone}
-                                            onChange={handleChange}
-                                            disabled={!isEditing}
-                                            className="input pl-10 w-full bg-black/20 border-white/10 text-white placeholder-gray-600 focus:border-neon-blue disabled:opacity-50 disabled:cursor-not-allowed"
-                                            placeholder="+91 98765 43210"
-                                        />
-                                    </div>
-                                </div>
-
-                                {/* Location */}
-                                <div className="space-y-2">
-                                    <label className="text-sm font-medium text-gray-400 ml-1">Location</label>
-                                    <div className="relative group">
-                                        <MapPin className="absolute left-3 top-3 text-gray-500 group-focus-within:text-neon-blue transition-colors w-5 h-5" />
-                                        <input
-                                            type="text"
-                                            list="locations"
-                                            name="location"
-                                            value={userData.location}
-                                            onChange={handleChange}
-                                            disabled={!isEditing}
-                                            className="input pl-10 w-full bg-black/20 border-white/10 text-white focus:border-neon-blue disabled:opacity-50 disabled:cursor-not-allowed"
-                                            placeholder="Select or type your location"
-                                        />
-                                        <datalist id="locations">
-                                            <option value="Coimbatore" />
-                                            <option value="Erode" />
-                                            <option value="Tirupur" />
-                                            <option value="Chennai" />
-                                            <option value="Madurai" />
-                                            <option value="Bangalore" />
-                                            <option value="Hyderabad" />
-                                            <option value="Mumbai" />
-                                        </datalist>
+                            {/* Email (Read-only) */}
+                            <div className="space-y-3">
+                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Verified Email Asset</label>
+                                <div className="relative group">
+                                    <Mail className="absolute left-6 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+                                    <input
+                                        type="email"
+                                        value={userData.email}
+                                        disabled
+                                        className="w-full bg-slate-100 border border-slate-200 rounded-3xl py-5 pl-14 pr-6 text-slate-500 font-bold cursor-not-allowed opacity-60"
+                                    />
+                                    <div className="absolute right-6 top-1/2 -translate-y-1/2">
+                                        <BadgeCheck className="w-5 h-5 text-emerald-500" />
                                     </div>
                                 </div>
                             </div>
 
-                            {/* Action Buttons */}
-                            {isEditing && (
-                                <div className="flex gap-4 pt-6 border-t border-white/10 mt-6 animate-fade-in">
-                                    <button
-                                        onClick={() => {
-                                            setIsEditing(false);
-                                            fetchUserData();
-                                        }}
-                                        className="btn bg-white/5 border border-white/10 text-gray-300 hover:bg-white/10 flex-1 py-2.5 rounded-xl transition-colors"
-                                    >
-                                        Cancel
-                                    </button>
-                                    <button
-                                        onClick={handleSave}
-                                        disabled={saving}
-                                        className="btn btn-primary flex-1 py-2.5 flex items-center justify-center gap-2"
-                                    >
-                                        {saving ? (
-                                            <>
-                                                <LoadingSpinner size="sm" />
-                                                <span>Saving...</span>
-                                            </>
-                                        ) : (
-                                            <>
-                                                <Save className="w-4 h-4" />
-                                                <span>Save Changes</span>
-                                            </>
-                                        )}
-                                    </button>
+                            {/* Phone */}
+                            <div className="space-y-3">
+                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Communication Network</label>
+                                <div className="relative group">
+                                    <Phone className="absolute left-6 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-300 group-focus-within:text-premium-purple transition-colors" />
+                                    <input
+                                        type="tel"
+                                        name="phone"
+                                        value={userData.phone}
+                                        onChange={handleChange}
+                                        disabled={!isEditing}
+                                        className="w-full bg-slate-50/50 border border-slate-200 rounded-3xl py-5 pl-14 pr-6 text-slate-950 focus:outline-none focus:ring-4 focus:ring-premium-purple/10 focus:border-premium-purple transition-all font-bold group-hover:bg-white disabled:opacity-60 disabled:cursor-not-allowed"
+                                        placeholder="Phone Number"
+                                    />
                                 </div>
-                            )}
+                            </div>
+
+                            {/* Location */}
+                            <div className="space-y-3">
+                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Geographic Domain</label>
+                                <div className="relative group">
+                                    <MapPin className="absolute left-6 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-300 group-focus-within:text-premium-purple transition-colors" />
+                                    <input
+                                        type="text"
+                                        name="location"
+                                        value={userData.location}
+                                        onChange={handleChange}
+                                        disabled={!isEditing}
+                                        className="w-full bg-slate-50/50 border border-slate-200 rounded-3xl py-5 pl-14 pr-6 text-slate-950 focus:outline-none focus:ring-4 focus:ring-premium-purple/10 focus:border-premium-purple transition-all font-bold group-hover:bg-white disabled:opacity-60 disabled:cursor-not-allowed"
+                                        placeholder="Primary Location"
+                                    />
+                                </div>
+                            </div>
                         </div>
-                    </div>
+
+                        {/* System Preference quick strip */}
+                        <div className="mt-12 p-8 bg-slate-50/50 rounded-[2rem] border border-slate-100 flex flex-wrap items-center justify-between gap-6">
+                            <div className="flex items-center gap-4">
+                                <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center border border-slate-100 shadow-sm">
+                                    <CreditCard className="w-6 h-6 text-slate-400" />
+                                </div>
+                                <div>
+                                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Billing History</p>
+                                    <p className="text-sm font-black text-slate-900 leading-none">Access Financial Records</p>
+                                </div>
+                            </div>
+                            <button className="px-6 py-3 bg-white border border-slate-200 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-950 hover:text-white transition-all">
+                                Request Access
+                            </button>
+                        </div>
+                    </GlassCard>
                 </div>
             </div>
+
+            <div className="absolute bottom-0 -right-20 w-80 h-80 bg-premium-purple/5 rounded-full blur-[100px] pointer-events-none -z-10 animate-blob"></div>
         </div>
     );
 };

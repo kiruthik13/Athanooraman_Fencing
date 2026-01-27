@@ -4,8 +4,10 @@ import { AuthProvider } from './contexts/AuthContext';
 import ProtectedRoute from './components/common/ProtectedRoute';
 
 // Auth Pages
-import SignUp from './components/auth/SignUp';
 import SignIn from './components/auth/SignIn';
+import AdminSignIn from './components/auth/AdminSignIn';
+import SignUp from './components/auth/SignUp';
+import AdminSignUp from './components/auth/AdminSignUp';
 import ForgotPassword from './components/auth/ForgotPassword';
 
 // Common Pages
@@ -37,7 +39,9 @@ const App = () => {
           {/* Public Routes */}
           <Route path="/" element={<Navigate to="/signin" replace />} />
           <Route path="/signup" element={<SignUp />} />
+          <Route path="/admin-signup" element={<AdminSignUp />} />
           <Route path="/signin" element={<SignIn />} />
+          <Route path="/admin-login" element={<AdminSignIn />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/terms" element={<TermsConditions />} />
 

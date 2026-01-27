@@ -15,9 +15,10 @@ const ProtectedRoute = ({ children, requiredRole }) => {
         );
     }
 
-    // If user not logged in, redirect to signin
+    // If user not logged in, redirect to appropriate signin portal
     if (!currentUser) {
-        return <Navigate to="/signin" replace />;
+        const isAdminPath = window.location.pathname.startsWith('/admin');
+        return <Navigate to={isAdminPath ? "/admin-login" : "/signin"} replace />;
     }
 
     // If route requires a specific role and user doesn't have it

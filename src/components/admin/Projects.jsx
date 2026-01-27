@@ -1,299 +1,225 @@
 import React, { useState, useEffect } from 'react';
-import { FolderKanban, Plus, Search, Filter, MoreVertical, CheckCircle, Clock, AlertCircle, PlayCircle, Edit } from 'lucide-react';
-import { collection, getDocs, doc, updateDoc, addDoc } from 'firebase/firestore';
+import { FolderKanban, Search, Calendar, TrendingUp, Sparkles, Filter, CheckCircle2, Layout, Clock, User, ArrowRight } from 'lucide-react';
+import { collection, onSnapshot } from 'firebase/firestore';
 import { db } from '../../config/firebase';
 import { useToast } from '../common/Toast';
 import LoadingSpinner from '../common/LoadingSpinner';
+import GlassCard from '../common/GlassCard';
+import AnimatedBackground from '../common/AnimatedBackground';
+import PremiumButton from '../common/PremiumButton';
 
 const Projects = () => {
     const [projects, setProjects] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
-    const [showAddModal, setShowAddModal] = useState(false);
-    const [editingId, setEditingId] = useState(null);
-    const [newProject, setNewProject] = useState({ name: '', clientName: '', type: 'Residential', status: 'In Progress', progress: 0 });
+    const [statusFilter, setStatusFilter] = useState('All');
     const { showToast } = useToast();
 
     useEffect(() => {
-        fetchProjects();
-    }, []);
-
-    const fetchProjects = async () => {
-        try {
-            const querySnapshot = await getDocs(collection(db, 'projects'));
-            const projectsData = querySnapshot.docs.map(doc => ({
+        setLoading(true);
+        const unsubscribe = onSnapshot(collection(db, 'projects'), (snap) => {
+            const projectsData = snap.docs.map(doc => ({
                 id: doc.id,
                 ...doc.data()
             }));
-            setProjects(projectsData);
-        } catch (error) {
+            setProjects(projectsData.sort((a, b) => {
+                const dateA = a.createdAt ? new Date(a.createdAt) : 0;
+                const dateB = b.createdAt ? new Date(b.createdAt) : 0;
+                return dateB - dateA;
+            }));
+            setLoading(false);
+        }, (error) => {
             console.error("Error fetching projects:", error);
             showToast('Failed to fetch projects', 'error');
-        } finally {
             setLoading(false);
-        }
-    };
-
-    const handleSaveProject = async (e) => {
-        e.preventDefault();
-
-        // Logic Validation
-        let finalProgress = Math.min(100, Math.max(0, Number(newProject.progress)));
-        let finalStatus = newProject.status;
-
-        if (finalProgress === 100) {
-            finalStatus = 'Completed';
-        } else if (finalStatus === 'Completed' && finalProgress < 100) {
-            finalStatus = 'In Progress';
-        }
-
-        const projectData = {
-            ...newProject,
-            progress: finalProgress,
-            status: finalStatus,
-            updatedAt: new Date().toISOString()
-        };
-
-        try {
-            if (editingId) {
-                await updateDoc(doc(db, 'projects', editingId), projectData);
-                showToast('Project updated successfully', 'success');
-            } else {
-                await addDoc(collection(db, 'projects'), {
-                    ...projectData,
-                    createdAt: new Date().toISOString()
-                });
-                showToast('Project created successfully', 'success');
-            }
-
-            closeModal();
-            fetchProjects();
-        } catch (error) {
-            showToast('Failed to save project', 'error');
-        }
-    };
-
-    const handleMarkCompleted = async (id) => {
-        if (window.confirm('Mark this project as completed?')) {
-            try {
-                await updateDoc(doc(db, 'projects', id), {
-                    status: 'Completed',
-                    progress: 100,
-                    updatedAt: new Date().toISOString()
-                });
-                showToast('Project marked as completed', 'success');
-                fetchProjects();
-            } catch (error) {
-                showToast('Failed to update project', 'error');
-            }
-        }
-    };
-
-    const handleEditClick = (project) => {
-        setEditingId(project.id);
-        setNewProject({
-            name: project.name,
-            clientName: project.clientName,
-            type: project.type,
-            status: project.status,
-            progress: project.progress
         });
-        setShowAddModal(true);
-    };
 
-    const closeModal = () => {
-        setShowAddModal(false);
-        setEditingId(null);
-        setNewProject({ name: '', clientName: '', type: 'Residential', status: 'In Progress', progress: 0 });
-    };
+        return () => unsubscribe();
+    }, []);
 
-    const filteredProjects = projects.filter(project =>
-        project.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        project.clientName?.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-
-    const getStatusColor = (status) => {
+    const getStatusStyle = (status) => {
         switch (status) {
-            case 'Completed': return 'text-green-400 bg-green-500/10 border-green-500/20 shadow-[0_0_10px_rgba(74,222,128,0.2)]';
-            case 'In Progress': return 'text-neon-blue bg-neon-blue/10 border-neon-blue/20 shadow-neon';
-            case 'Pending': return 'text-yellow-400 bg-yellow-500/10 border-yellow-500/20 shadow-[0_0_10px_rgba(250,204,21,0.2)]';
-            default: return 'text-gray-400 bg-gray-500/10 border-gray-500/20';
+            case 'Completed':
+                return 'bg-emerald-500/10 text-emerald-500 border-emerald-500/30';
+            case 'In Progress':
+                return 'bg-premium-cyan/10 text-premium-cyan border-premium-cyan/30';
+            case 'Pending':
+                return 'bg-amber-500/10 text-amber-500 border-amber-500/30';
+            default:
+                return 'bg-slate-500/10 text-slate-500 border-slate-500/30';
         }
     };
 
-    if (loading) return <LoadingSpinner text="Loading projects..." />;
+    const filteredProjects = projects.filter(project => {
+        const matchesSearch =
+            project.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            project.clientName?.toLowerCase().includes(searchTerm.toLowerCase());
+        const matchesStatus = statusFilter === 'All' || project.status === statusFilter;
+        return matchesSearch && matchesStatus;
+    });
+
+    if (loading) return <LoadingSpinner text="Synchronizing project lifecycles..." />;
 
     return (
-        <div className="space-y-6 animate-fade-in">
+        <div className="space-y-8 relative">
+            <AnimatedBackground />
+
             {/* Header */}
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                <div>
-                    <h1 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-neon-blue to-neon-purple text-glow">
-                        Active Projects
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+                <div className="animate-fade-in">
+                    <h1 className="text-4xl font-black text-slate-950 flex items-center gap-3">
+                        <FolderKanban className="w-10 h-10 text-premium-purple animate-float" />
+                        <span className="gradient-text">Project Ecosystem</span>
                     </h1>
-                    <p className="text-gray-400 mt-1">Track progress and milestones</p>
+                    <p className="text-slate-600 mt-2 font-medium">Monitoring architectural execution and milestones</p>
                 </div>
-                <button
-                    onClick={() => setShowAddModal(true)}
-                    className="btn btn-primary flex items-center gap-2 group"
-                >
-                    <Plus className="w-5 h-5 group-hover:rotate-90 transition-transform duration-300" />
-                    <span>Add Project</span>
-                </button>
+                <div className="flex items-center gap-4 animate-fade-in" style={{ animationDelay: '100ms' }}>
+                    <div className="px-5 py-3 bg-white shadow-premium rounded-2xl flex items-center gap-3 border border-indigo-50/50">
+                        <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
+                        <span className="text-sm font-black text-slate-700 uppercase tracking-widest">
+                            {projects.filter(p => p.status === 'In Progress').length} Active
+                        </span>
+                    </div>
+                </div>
             </div>
 
-            {/* Main Content Card */}
-            <div className="glass-panel rounded-2xl border border-white/10 overflow-hidden shadow-neon">
-                {/* Search Bar */}
-                <div className="p-6 border-b border-white/10 flex gap-4">
-                    <div className="relative flex-1 max-w-md group">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 group-focus-within:text-neon-blue transition-colors w-5 h-5" />
+            {/* Filters */}
+            <GlassCard className="animate-fade-in-up" style={{ animationDelay: '200ms' }}>
+                <div className="flex flex-col lg:flex-row gap-6 items-center">
+                    <div className="relative flex-1 group w-full">
+                        <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-slate-400 group-focus-within:text-premium-purple transition-colors" />
                         <input
                             type="text"
-                            placeholder="Search projects..."
+                            placeholder="Locate project by title or client..."
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
-                            className="input pl-10 bg-white/5 border-white/10 text-white placeholder-gray-500 focus:border-neon-blue focus:shadow-neon w-full transition-all duration-300"
+                            className="w-full bg-slate-50 border border-slate-200 rounded-2xl py-4 pl-12 pr-4 text-slate-950 placeholder-slate-400 focus:outline-none focus:ring-4 focus:ring-premium-purple/10 focus:border-premium-purple transition-all font-medium"
                         />
                     </div>
-                </div>
-
-                <div className="overflow-x-auto">
-                    <table className="w-full text-left">
-                        <thead className="bg-white/5 border-b border-white/10">
-                            <tr>
-                                <th className="px-6 py-4 text-xs font-semibold text-neon-blue uppercase tracking-wider">Project Name</th>
-                                <th className="px-6 py-4 text-xs font-semibold text-neon-purple uppercase tracking-wider">Client Email</th>
-                                <th className="px-6 py-4 text-xs font-semibold text-white uppercase tracking-wider">Progress</th>
-                                <th className="px-6 py-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">Status</th>
-                                <th className="px-6 py-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">Type</th>
-                                <th className="px-6 py-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-white/5">
-                            {filteredProjects.length > 0 ? (
-                                filteredProjects.map((project) => (
-                                    <tr key={project.id} className="group hover:bg-white/5 transition-colors duration-200">
-                                        <td className="px-6 py-4">
-                                            <span className="font-bold text-white group-hover:text-neon-blue transition-colors">{project.name}</span>
-                                        </td>
-                                        <td
-                                            className="px-6 py-4 text-gray-300 cursor-pointer hover:text-neon-blue transition-colors"
-                                            onClick={() => setSearchTerm(project.clientName)}
-                                            title="Filter by this client"
-                                        >
-                                            {project.clientName}
-                                        </td>
-                                        <td className="px-6 py-4 w-1/4">
-                                            <div className="flex flex-col gap-1">
-                                                <div className="flex justify-between text-xs mb-1">
-                                                    <span className="text-gray-400">{project.progress}%</span>
-                                                </div>
-                                                <div className="w-full h-2 bg-black/40 rounded-full overflow-hidden border border-white/5">
-                                                    <div
-                                                        className={`h-full rounded-full transition-all duration-1000 ease-out relative overflow-hidden ${project.status === 'Completed'
-                                                            ? 'bg-gradient-to-r from-green-400 to-green-600'
-                                                            : 'bg-gradient-to-r from-neon-blue to-neon-purple'
-                                                            }`}
-                                                        style={{ width: `${project.progress}%` }}
-                                                    >
-                                                        <div className="absolute inset-0 bg-white/20 animate-pulse-fast"></div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium border ${getStatusColor(project.status)}`}>
-                                                {project.status === 'Completed' ? <CheckCircle className="w-3 h-3 mr-1" /> : <PlayCircle className="w-3 h-3 mr-1" />}
-                                                {project.status}
-                                            </span>
-                                        </td>
-                                        <td className="px-6 py-4 text-gray-400 text-sm">{project.type}</td>
-                                        <td className="px-6 py-4">
-                                            <div className="flex gap-2">
-                                                <button
-                                                    onClick={() => handleEditClick(project)}
-                                                    className="p-2 text-gray-400 hover:text-neon-blue hover:bg-neon-blue/10 rounded-lg transition-colors group/btn"
-                                                    title="Edit Project"
-                                                >
-                                                    <Edit className="w-4 h-4 group-hover/btn:scale-110 transition-transform" />
-                                                </button>
-                                                {project.status !== 'Completed' && (
-                                                    <button
-                                                        onClick={() => handleMarkCompleted(project.id)}
-                                                        className="p-2 text-green-400 hover:bg-green-400/10 rounded-lg transition-colors group/check"
-                                                        title="Mark as Completed"
-                                                    >
-                                                        <CheckCircle className="w-4 h-4 group-hover/check:scale-110 transition-transform" />
-                                                    </button>
-                                                )}
-                                            </div>
-                                        </td>
-                                    </tr>
-                                ))
-                            ) : (
-                                <tr>
-                                    <td colSpan="6" className="px-6 py-12 text-center text-gray-500">
-                                        <div className="flex flex-col items-center justify-center">
-                                            <FolderKanban className="w-12 h-12 mb-4 mx-auto opacity-50" />
-                                            <p className="text-lg">No active projects found.</p>
-                                        </div>
-                                    </td>
-                                </tr>
-                            )}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-
-            {/* Add/Edit Project Modal */}
-            {showAddModal && (
-                <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fade-in">
-                    <div className="glass-panel w-full max-w-md rounded-2xl border border-neon-blue/30 shadow-neon overflow-hidden animate-slide-in">
-                        <div className="p-6 border-b border-white/10 flex justify-between items-center bg-white/5">
-                            <h3 className="text-xl font-bold text-white">{editingId ? 'Edit Project' : 'New Project'}</h3>
-                        </div>
-                        <form onSubmit={handleSaveProject} className="p-6 space-y-4">
-                            <div>
-                                <label className="block text-sm font-medium text-gray-300 mb-1">Project Name</label>
-                                <input type="text" required className="input w-full bg-black/20 border-white/10 text-white" value={newProject.name} onChange={e => setNewProject({ ...newProject, name: e.target.value })} />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-300 mb-1">Client Email</label>
-                                <input type="email" required className="input w-full bg-black/20 border-white/10 text-white" value={newProject.clientName} onChange={e => setNewProject({ ...newProject, clientName: e.target.value })} />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-300 mb-1">Type</label>
-                                <select className="input w-full bg-black/20 border-white/10 text-white" value={newProject.type} onChange={e => setNewProject({ ...newProject, type: e.target.value })}>
-                                    <option className="bg-gray-900" value="Residential">Residential</option>
-                                    <option className="bg-gray-900" value="Commercial">Commercial</option>
-                                    <option className="bg-gray-900" value="Industrial">Industrial</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-300 mb-1">Progress (%)</label>
-                                <input
-                                    type="number"
-                                    min="0"
-                                    max="100"
-                                    className="input w-full bg-black/20 border-white/10 text-white"
-                                    value={newProject.progress}
-                                    onChange={e => {
-                                        let val = parseInt(e.target.value);
-                                        if (val > 100) val = 100;
-                                        if (val < 0) val = 0;
-                                        setNewProject({ ...newProject, progress: val })
-                                    }}
-                                />
-                            </div>
-                            <div className="flex gap-3 pt-4">
-                                <button type="button" onClick={closeModal} className="flex-1 px-4 py-3 border border-white/10 text-gray-300 rounded-xl hover:bg-white/10 transition-colors">Cancel</button>
-                                <button type="submit" className="flex-1 btn btn-primary">{editingId ? 'Update' : 'Create'} Project</button>
-                            </div>
-                        </form>
+                    <div className="flex flex-wrap items-center gap-2 w-full lg:w-auto">
+                        {['All', 'Pending', 'In Progress', 'Completed'].map((status) => (
+                            <button
+                                key={status}
+                                onClick={() => setStatusFilter(status)}
+                                className={`flex-1 lg:flex-none px-6 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${statusFilter === status
+                                    ? 'bg-gradient-to-r from-premium-purple to-indigo-600 text-white shadow-glow'
+                                    : 'bg-white text-slate-400 hover:text-slate-600 border border-slate-100'
+                                    }`}
+                            >
+                                {status}
+                            </button>
+                        ))}
                     </div>
                 </div>
-            )}
+            </GlassCard>
+
+            {/* Projects Grid */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                {filteredProjects.length > 0 ? (
+                    filteredProjects.map((project, index) => (
+                        <GlassCard
+                            key={project.id}
+                            className="group animate-fade-in-up hover:translate-y-[-4px] transition-all duration-500"
+                            style={{ animationDelay: `${300 + index * 100}ms` }}
+                        >
+                            <div className="flex items-start justify-between mb-8">
+                                <div className="space-y-1">
+                                    <div className="flex items-center gap-2">
+                                        <h3 className="text-2xl font-black text-slate-950 group-hover:text-premium-purple transition-colors">
+                                            {project.name}
+                                        </h3>
+                                        <Sparkles className="w-4 h-4 text-premium-cyan animate-pulse" />
+                                    </div>
+                                    <p className="text-[10px] font-black text-slate-400 font-mono tracking-widest uppercase bg-slate-100 w-max px-2 py-0.5 rounded">
+                                        PRJ-ID: {project.id.slice(0, 12)}
+                                    </p>
+                                </div>
+                                <span className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border ${getStatusStyle(project.status)} shadow-sm`}>
+                                    {project.status}
+                                </span>
+                            </div>
+
+                            {/* Luxury Progress Bar */}
+                            <div className="mb-8 p-6 bg-slate-50/50 rounded-2xl border border-slate-100 group-hover:bg-white group-hover:border-premium-purple/10 transition-all duration-500">
+                                <div className="flex items-center justify-between mb-3">
+                                    <div className="flex items-center gap-2">
+                                        <Layout className="w-4 h-4 text-slate-400" />
+                                        <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Execution Metric</span>
+                                    </div>
+                                    <div className="flex items-center gap-1">
+                                        <span className="text-xl font-black text-slate-950 tabular-nums">{project.progress}%</span>
+                                        <span className="text-[10px] font-black text-slate-400 uppercase">Complete</span>
+                                    </div>
+                                </div>
+                                <div className="w-full bg-slate-200/50 rounded-full h-3 p-0.5 overflow-hidden">
+                                    <div
+                                        className={`h-full rounded-full transition-all duration-1000 ease-out shadow-glow-sm ${project.status === 'Completed'
+                                            ? 'bg-gradient-to-r from-emerald-400 to-emerald-600'
+                                            : 'bg-gradient-to-r from-premium-purple to-premium-cyan'
+                                            }`}
+                                        style={{ width: `${project.progress}%` }}
+                                    >
+                                        <div className="w-full h-full bg-[linear-gradient(45deg,rgba(255,255,255,0.2)_25%,transparent_25%,transparent_50%,rgba(255,255,255,0.2)_50%,rgba(255,255,255,0.2)_75%,transparent_75%,transparent)] bg-[length:20px_20px] animate-shimmer"></div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Project Details */}
+                            <div className="grid grid-cols-2 gap-6">
+                                <div className="flex items-center gap-4 p-4 rounded-xl hover:bg-white hover:shadow-card transition-all cursor-pointer group/item">
+                                    <div className="w-12 h-12 bg-indigo-50 rounded-2xl flex items-center justify-center flex-shrink-0 group-hover/item:bg-premium-purple transition-colors">
+                                        <Calendar className="w-5 h-5 text-indigo-600 group-hover/item:text-white" />
+                                    </div>
+                                    <div>
+                                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Initiated</p>
+                                        <p className="text-sm font-black text-slate-900">
+                                            {new Date(project.createdAt).toLocaleDateString(undefined, { day: '2-digit', month: 'short', year: 'numeric' })}
+                                        </p>
+                                    </div>
+                                </div>
+                                <div className="flex items-center gap-4 p-4 rounded-xl hover:bg-white hover:shadow-card transition-all cursor-pointer group/item">
+                                    <div className="w-12 h-12 bg-cyan-50 rounded-2xl flex items-center justify-center flex-shrink-0 group-hover/item:bg-premium-cyan transition-colors">
+                                        <TrendingUp className="w-5 h-5 text-cyan-600 group-hover/item:text-white" />
+                                    </div>
+                                    <div>
+                                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Classification</p>
+                                        <p className="text-sm font-black text-slate-900">{project.type || 'Custom Elite'}</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="mt-8 pt-6 border-t border-slate-100 flex items-center justify-between">
+                                <div className="flex items-center gap-2">
+                                    <User className="w-4 h-4 text-slate-400" />
+                                    <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">{project.clientName || 'Assigned Client'}</span>
+                                </div>
+                                <button className="p-2 hover:bg-slate-100 rounded-lg transition-colors group/btn">
+                                    <ArrowRight className="w-5 h-5 text-slate-400 group-hover/btn:text-premium-purple group-hover/btn:translate-x-1 transition-all" />
+                                </button>
+                            </div>
+                        </GlassCard>
+                    ))
+                ) : (
+                    <div className="col-span-full py-20">
+                        <GlassCard className="text-center animate-zoom-in max-w-lg mx-auto">
+                            <div className="w-24 h-24 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-6 text-slate-200">
+                                <FolderKanban className="w-12 h-12" />
+                            </div>
+                            <h3 className="text-2xl font-black text-slate-900 mb-2">Portfolio Void</h3>
+                            <p className="text-slate-500 font-medium">No projects found in the current architectural stream.</p>
+                            <PremiumButton
+                                variant="outline"
+                                className="mt-8"
+                                onClick={() => { setSearchTerm(''); setStatusFilter('All'); }}
+                            >
+                                Re-sync Ecosystem
+                            </PremiumButton>
+                        </GlassCard>
+                    </div>
+                )}
+            </div>
+
+            <div className="absolute top-1/2 -right-40 w-[500px] h-[500px] bg-premium-purple/5 rounded-full blur-[100px] pointer-events-none -z-10 animate-blob"></div>
         </div>
     );
 };
