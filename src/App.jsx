@@ -31,58 +31,68 @@ import Customers from './components/admin/Customers';
 import Reports from './components/admin/Reports';
 import Settings from './components/admin/Settings';
 
-const App = () => {
+const App = ({ portal }) => {
   return (
     <AuthProvider>
       <BrowserRouter>
         <Routes>
-          {/* Public Routes */}
-          <Route path="/" element={<Navigate to="/signin" replace />} />
-          <Route path="/signup" element={<SignUp />} />
-          <Route path="/admin-signup" element={<AdminSignUp />} />
-          <Route path="/signin" element={<SignIn />} />
-          <Route path="/admin-login" element={<AdminSignIn />} />
-          <Route path="/forgot-password" element={<ForgotPassword />} />
+          {/* Shared Public Routes */}
           <Route path="/terms" element={<TermsConditions />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
 
-          {/* Customer Routes */}
-          <Route
-            path="/customer"
-            element={
-              <ProtectedRoute requiredRole="Customer">
-                <CustomerLayout />
-              </ProtectedRoute>
-            }
-          >
-            <Route index element={<Navigate to="/customer/dashboard" replace />} />
-            <Route path="dashboard" element={<Products />} />
-            <Route path="projects" element={<MyProjects />} />
-            <Route path="calculator" element={<Calculator />} />
-            <Route path="quotes" element={<MyQuotes />} />
-            <Route path="profile" element={<Profile />} />
-          </Route>
+          {portal === 'client' ? (
+            <>
+              <Route path="/" element={<Navigate to="/signin" replace />} />
+              <Route path="/signin" element={<SignIn />} />
+              <Route path="/signup" element={<SignUp />} />
 
-          {/* Admin Routes */}
-          <Route
-            path="/admin"
-            element={
-              <ProtectedRoute requiredRole="Admin">
-                <AdminLayout />
-              </ProtectedRoute>
-            }
-          >
-            <Route index element={<Navigate to="/admin/dashboard" replace />} />
-            <Route path="dashboard" element={<Dashboard />} />
-            <Route path="products" element={<ProductsAdmin />} />
-            <Route path="quotes" element={<Quotes />} />
-            <Route path="projects" element={<ProjectsAdmin />} />
-            <Route path="customers" element={<Customers />} />
-            <Route path="reports" element={<Reports />} />
-            <Route path="settings" element={<Settings />} />
-          </Route>
+              {/* Customer Private Routes */}
+              <Route
+                path="/customer"
+                element={
+                  <ProtectedRoute requiredRole="Customer">
+                    <CustomerLayout />
+                  </ProtectedRoute>
+                }
+              >
+                <Route index element={<Navigate to="/customer/dashboard" replace />} />
+                <Route path="dashboard" element={<Products />} />
+                <Route path="projects" element={<MyProjects />} />
+                <Route path="calculator" element={<Calculator />} />
+                <Route path="quotes" element={<MyQuotes />} />
+                <Route path="profile" element={<Profile />} />
+              </Route>
 
-          {/* 404 */}
-          <Route path="*" element={<Navigate to="/signin" replace />} />
+              <Route path="*" element={<Navigate to="/signin" replace />} />
+            </>
+          ) : (
+            <>
+              <Route path="/" element={<Navigate to="/admin-login" replace />} />
+              <Route path="/admin-login" element={<AdminSignIn />} />
+              <Route path="/admin-signup" element={<AdminSignUp />} />
+
+              {/* Admin Private Routes */}
+              <Route
+                path="/admin"
+                element={
+                  <ProtectedRoute requiredRole="Admin">
+                    <AdminLayout />
+                  </ProtectedRoute>
+                }
+              >
+                <Route index element={<Navigate to="/admin/dashboard" replace />} />
+                <Route path="dashboard" element={<Dashboard />} />
+                <Route path="products" element={<ProductsAdmin />} />
+                <Route path="quotes" element={<Quotes />} />
+                <Route path="projects" element={<ProjectsAdmin />} />
+                <Route path="customers" element={<Customers />} />
+                <Route path="reports" element={<Reports />} />
+                <Route path="settings" element={<Settings />} />
+              </Route>
+
+              <Route path="*" element={<Navigate to="/admin-login" replace />} />
+            </>
+          )}
         </Routes>
       </BrowserRouter>
     </AuthProvider>
