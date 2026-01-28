@@ -49,7 +49,7 @@ const Dashboard = () => {
                         // Operational status for revenue is 'Approved' in this workflow
                         return isThisMonth && q.status === 'Approved';
                     })
-                    .reduce((sum, q) => sum + (Number(q.totalCost) || Number(q.estimatedCost) || 0), 0);
+                    .reduce((sum, q) => sum + (Number(q.estimatedCost) || Number(q.totalCost) || 0), 0);
 
                 const sortedQuotes = [...quotes]
                     .sort((a, b) => {
@@ -158,7 +158,7 @@ const Dashboard = () => {
                 <div className="flex items-center justify-between">
                     <div>
                         <p className="text-white/80 text-sm font-semibold uppercase tracking-wider mb-2">Revenue This Month</p>
-                        <h2 className="text-5xl font-black mb-2">₹{stats.revenueThisMonth.toLocaleString()}</h2>
+                        <h2 className="text-5xl font-black mb-2">₹{stats.revenueThisMonth.toLocaleString('en-IN')}</h2>
                         <div className="flex items-center gap-2 text-white/90">
                             <TrendingUp className="w-5 h-5" />
                             <span className="text-lg font-semibold">+18.5% from last month</span>
@@ -241,7 +241,7 @@ const Dashboard = () => {
                                         <td className="px-6 py-4 text-sm text-slate-900">{quote.productName || 'N/A'}</td>
                                         <td className="px-6 py-4">
                                             <span className="text-lg font-bold gradient-text">
-                                                ₹{(quote.totalCost || quote.estimatedCost || 0).toLocaleString()}
+                                                ₹{(Number(quote.estimatedCost) || Number(quote.totalCost) || 0).toLocaleString('en-IN')}
                                             </span>
                                         </td>
                                         <td className="px-6 py-4">

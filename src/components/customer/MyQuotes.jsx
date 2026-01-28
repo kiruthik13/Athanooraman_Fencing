@@ -262,7 +262,7 @@ const MyQuotes = () => {
                                                     <IndianRupee className="w-3 h-3" /> Financial Estimate
                                                 </p>
                                                 <p className="text-sm font-black text-slate-950">
-                                                    {quote.estimatedCost ? `₹${quote.estimatedCost.toLocaleString()}` : 'In Calculation'}
+                                                    {(Number(quote.estimatedCost) || Number(quote.totalCost)) ? `₹${(Number(quote.estimatedCost) || Number(quote.totalCost)).toLocaleString('en-IN')}` : 'In Calculation'}
                                                 </p>
                                             </div>
 

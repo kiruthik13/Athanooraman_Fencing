@@ -58,7 +58,7 @@ const Quotes = () => {
             const quoteRef = doc(db, 'quotes', editingQuote.id);
             await updateDoc(quoteRef, {
                 productName: editingQuote.productName,
-                estimatedCost: Number(editingQuote.estimatedCost || editingQuote.totalCost),
+                estimatedCost: Number(editingQuote.estimatedCost) || Number(editingQuote.totalCost) || 0,
                 area: Number(editingQuote.area),
                 notes: editingQuote.notes || '',
                 updatedAt: new Date().toISOString()
@@ -203,7 +203,7 @@ const Quotes = () => {
                                                 <div className="flex items-center gap-1">
                                                     <IndianRupee className="w-4 h-4 text-slate-950" />
                                                     <span className="text-xl font-black text-slate-950 tabular-nums">
-                                                        {(quote.estimatedCost || quote.totalCost || 0).toLocaleString()}
+                                                        {(Number(quote.estimatedCost) || Number(quote.totalCost) || 0).toLocaleString('en-IN')}
                                                     </span>
                                                 </div>
                                                 <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.1em] mt-1">Net Valuation</p>
@@ -338,7 +338,7 @@ const Quotes = () => {
                                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Net Valuation (₹)</label>
                                     <input
                                         type="number"
-                                        value={editingQuote.estimatedCost || editingQuote.totalCost || 0}
+                                        value={Number(editingQuote.estimatedCost) || Number(editingQuote.totalCost) || 0}
                                         onChange={(e) => setEditingQuote({ ...editingQuote, estimatedCost: e.target.value })}
                                         className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-6 text-white focus:outline-none focus:ring-4 focus:ring-premium-cyan/10 focus:border-premium-cyan transition-all font-black text-lg tabular-nums"
                                         required

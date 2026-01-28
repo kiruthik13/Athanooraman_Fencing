@@ -48,7 +48,7 @@ const Reports = () => {
 
             const totalRevenue = quotes
                 .filter(q => q.status === 'Approved' || q.status === 'Completed')
-                .reduce((sum, q) => sum + (q.totalCost || q.estimatedCost || 0), 0);
+                .reduce((sum, q) => sum + (Number(q.estimatedCost) || Number(q.totalCost) || 0), 0);
 
             const customers = users.filter(u => u.role === 'Customer').length;
 
@@ -79,7 +79,7 @@ const Reports = () => {
     const reportCards = [
         {
             title: 'Gross Revenue',
-            value: `₹${stats.totalRevenue.toLocaleString()}`,
+            value: `₹${stats.totalRevenue.toLocaleString('en-IN')}`,
             icon: DollarSign,
             gradient: 'from-emerald-500 to-teal-400',
             change: '+14.2%',
