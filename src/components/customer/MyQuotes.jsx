@@ -104,9 +104,12 @@ const MyQuotes = () => {
 
         const area = Number(quote.area) || 0;
         const total = Number(quote.estimatedCost) || Number(quote.totalCost) || 0;
-        const laborCost = area * 20;
-        const transportCost = area > 1000 ? 6000 : area > 500 ? 4000 : 2500;
-        const materialCost = total - laborCost - transportCost;
+
+        // Only calculate detailed breakdown if we have a valid total and area
+        const laborCost = area > 0 ? area * 20 : 0;
+        const transportCost = area > 0 ? (area > 1000 ? 6000 : area > 500 ? 4000 : 2500) : 0;
+        const materialCost = total > 0 ? Math.max(0, total - laborCost - transportCost) : 0;
+        const grandTotal = total > 0 ? total : 0;
 
         const preparedQuote = {
             ...quote,
@@ -115,7 +118,7 @@ const MyQuotes = () => {
                 materialCost: materialCost.toFixed(2),
                 laborCost: laborCost.toFixed(2),
                 transportCost: transportCost.toFixed(2),
-                grandTotal: total.toFixed(2)
+                grandTotal: grandTotal.toFixed(2)
             },
             formData: dimensions,
             product: { name: quote.productName },
@@ -262,7 +265,9 @@ const MyQuotes = () => {
                                                     <IndianRupee className="w-3 h-3" /> Financial Estimate
                                                 </p>
                                                 <p className="text-sm font-black text-slate-950">
-                                                    {(Number(quote.estimatedCost) || Number(quote.totalCost)) ? `₹${(Number(quote.estimatedCost) || Number(quote.totalCost)).toLocaleString('en-IN')}` : 'In Calculation'}
+                                                    {(Number(quote.estimatedCost) > 0 || Number(quote.totalCost) > 0)
+                                                        ? `₹${(Number(quote.estimatedCost) || Number(quote.totalCost)).toLocaleString('en-IN')}`
+                                                        : 'Awaiting Valuation'}
                                                 </p>
                                             </div>
 

@@ -201,12 +201,14 @@ const Quotes = () => {
                                         <td className="px-8 py-6">
                                             <div className="flex flex-col">
                                                 <div className="flex items-center gap-1">
-                                                    <IndianRupee className="w-4 h-4 text-slate-950" />
-                                                    <span className="text-xl font-black text-slate-950 tabular-nums">
+                                                    <IndianRupee className={`w-4 h-4 ${(Number(quote.estimatedCost) || Number(quote.totalCost)) ? 'text-slate-950' : 'text-rose-500'}`} />
+                                                    <span className={`text-xl font-black tabular-nums ${(Number(quote.estimatedCost) || Number(quote.totalCost)) ? 'text-slate-950' : 'text-rose-500 animate-pulse'}`}>
                                                         {(Number(quote.estimatedCost) || Number(quote.totalCost) || 0).toLocaleString('en-IN')}
                                                     </span>
                                                 </div>
-                                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.1em] mt-1">Net Valuation</p>
+                                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.1em] mt-1">
+                                                    {(Number(quote.estimatedCost) || Number(quote.totalCost)) ? 'Net Valuation' : 'Action Required'}
+                                                </p>
                                             </div>
                                         </td>
                                         <td className="px-8 py-6">
