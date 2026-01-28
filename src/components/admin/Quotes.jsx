@@ -369,13 +369,24 @@ const Quotes = () => {
                                             onClick={() => {
                                                 const product = products.find(p => p.id === editingQuote.productId || p.name === editingQuote.productName);
                                                 const basePrice = editingQuote.basePriceAtRequest || product.basePrice || 0;
-                                                const suggested = Number(editingQuote.area) * basePrice;
+                                                const area = Number(editingQuote.area);
+
+                                                // Standard calculation logic mirrored from Calculator.jsx
+                                                const matCost = area * basePrice;
+                                                const labCost = area * 20;
+                                                const transCost = area > 1000 ? 6000 : area > 500 ? 4000 : 2500;
+                                                const suggested = matCost + labCost + transCost;
+
                                                 setEditingQuote({ ...editingQuote, estimatedCost: suggested });
-                                                showToast(`Valuation auto-calculated at ₹${basePrice}/sqft`, 'info');
+                                                showToast(`Valuation auto-calculated (Material:₹${basePrice}/sqft + Labor + Transport)`, 'info');
                                             }}
                                             className="mt-2 text-[9px] font-black text-premium-cyan uppercase tracking-widest hover:underline flex items-center gap-1"
                                         >
-                                            <RotateCcw className="w-3 h-3" /> Use Suggested: ₹{(Number(editingQuote.area) * (editingQuote.basePriceAtRequest || products.find(p => p.id === editingQuote.productId || p.name === editingQuote.productName)?.basePrice || 0)).toLocaleString()}
+                                            <RotateCcw className="w-3 h-3" /> Use Suggested: ₹{(
+                                                (Number(editingQuote.area) * (editingQuote.basePriceAtRequest || products.find(p => p.id === editingQuote.productId || p.name === editingQuote.productName)?.basePrice || 0)) +
+                                                (Number(editingQuote.area) * 20) +
+                                                (Number(editingQuote.area) > 1000 ? 6000 : Number(editingQuote.area) > 500 ? 4000 : 2500)
+                                            ).toLocaleString()}
                                         </button>
                                     )}
                                 </div>

@@ -151,11 +151,11 @@ const BillGenerator = ({ calculations, formData, product, customerInfo, onClose 
                             </td>
                         </tr>
                         <tr style={{ borderTop: '2px solid #d1d5db', background: '#eff6ff' }}>
-                            <td style={{ padding: '6px 4px', color: '#111827', fontWeight: 'bold', fontSize: '12px' }}>TOTAL ESTIMATE</td>
+                            <td style={{ padding: '6px 4px', color: '#111827', fontWeight: 'bold', fontSize: '12px' }}>PROPOSAL VALUATION</td>
                             <td style={{ textAlign: 'right', padding: '6px 4px', color: '#2563eb', fontWeight: 'bold', fontSize: '14px' }}>
                                 {parseFloat(calculations.grandTotal) > 0
                                     ? `₹${parseFloat(calculations.grandTotal).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
-                                    : 'QUOTATION PENDING'}
+                                    : 'AWAITING ADMIN AUDIT'}
                             </td>
                         </tr>
                     </tbody>
@@ -165,7 +165,7 @@ const BillGenerator = ({ calculations, formData, product, customerInfo, onClose 
             {/* Amount in Words */}
             <div style={{ marginBottom: '8px', padding: '6px', background: '#f9fafb', borderRadius: '4px' }}>
                 <p style={{ fontSize: '9px', color: '#374151', margin: 0 }}>
-                    <span style={{ fontWeight: '600' }}>Amount Status:</span> {parseFloat(calculations.grandTotal) > 0 ? `${numberToWords(parseFloat(calculations.grandTotal))} Rupees Only` : 'Awaiting Administrative Valuation Audit'}
+                    <span style={{ fontWeight: '600' }}>Amount Status:</span> {parseFloat(calculations.grandTotal) > 0 ? `${numberToWords(parseFloat(calculations.grandTotal))} Rupees Only` : 'Pending Administrative Site Inspection & Valuation Audit'}
                 </p>
             </div>
 
