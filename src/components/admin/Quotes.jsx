@@ -221,11 +221,19 @@ const Quotes = () => {
                                                 <div className="flex items-center gap-1">
                                                     <IndianRupee className={`w-4 h-4 ${(Number(quote.estimatedCost) || Number(quote.totalCost)) ? 'text-slate-950' : 'text-rose-500'}`} />
                                                     <span className={`text-xl font-black tabular-nums ${(Number(quote.estimatedCost) || Number(quote.totalCost)) ? 'text-slate-950' : 'text-rose-500 animate-pulse'}`}>
-                                                        {(Number(quote.estimatedCost) || Number(quote.totalCost) || 0).toLocaleString('en-IN')}
+                                                        {(Number(quote.estimatedCost) || Number(quote.totalCost))
+                                                            ? (Number(quote.estimatedCost) || Number(quote.totalCost)).toLocaleString('en-IN')
+                                                            : (quote.area && products.find(p => p.id === quote.productId || p.name === quote.productName))
+                                                                ? ((Number(quote.area) * (quote.basePriceAtRequest || products.find(p => p.id === quote.productId || p.name === quote.productName)?.basePrice || 0)) + (Number(quote.area) * 20) + (Number(quote.area) > 1000 ? 6000 : Number(quote.area) > 500 ? 4000 : 2500)).toLocaleString('en-IN')
+                                                                : '0'}
                                                     </span>
                                                 </div>
                                                 <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.1em] mt-1">
-                                                    {(Number(quote.estimatedCost) || Number(quote.totalCost)) ? 'Net Valuation' : 'Action Required'}
+                                                    {(Number(quote.estimatedCost) || Number(quote.totalCost))
+                                                        ? 'Net Valuation'
+                                                        : (quote.area && products.find(p => p.id === quote.productId || p.name === quote.productName))
+                                                            ? 'Suggested Projection'
+                                                            : 'Action Required'}
                                                 </p>
                                             </div>
                                         </td>

@@ -151,13 +151,22 @@ const BillGenerator = ({ calculations, formData, product, customerInfo, onClose 
                             </td>
                         </tr>
                         <tr style={{ borderTop: '2px solid #d1d5db', background: '#eff6ff' }}>
-                            <td style={{ padding: '6px 4px', color: '#111827', fontWeight: 'bold', fontSize: '12px' }}>PROPOSAL VALUATION</td>
+                            <td style={{ padding: '6px 4px', color: '#111827', fontWeight: 'bold', fontSize: '12px' }}>
+                                {calculations.isDraft ? 'ESTIMATED PROPOSAL VALUATION' : 'CERTIFIED PROPOSAL VALUATION'}
+                            </td>
                             <td style={{ textAlign: 'right', padding: '6px 4px', color: '#2563eb', fontWeight: 'bold', fontSize: '14px' }}>
                                 {parseFloat(calculations.grandTotal) > 0
                                     ? `₹${parseFloat(calculations.grandTotal).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
                                     : 'AWAITING ADMIN AUDIT'}
                             </td>
                         </tr>
+                        {calculations.isDraft && (
+                            <tr>
+                                <td colSpan="2" style={{ padding: '4px', textAlign: 'center', fontSize: '8px', color: '#ef4444', fontWeight: 'bold', backgroundColor: '#fef2f2' }}>
+                                    ⚠️ THIS IS AN AUTOMATED DRAFT PROJECTION BASED ON PROJECTED SCALE. FINAL AUDIT PENDING.
+                                </td>
+                            </tr>
+                        )}
                     </tbody>
                 </table>
             </div>

@@ -11,6 +11,7 @@ const ProductDetail = ({ product, onClose }) => {
     const { currentUser } = useAuth();
     const { showToast } = useToast();
     const [requesting, setRequesting] = useState(false);
+    const [area, setArea] = useState('');
 
     const handleRequestQuote = async () => {
         if (!currentUser) {
@@ -28,7 +29,7 @@ const ProductDetail = ({ product, onClose }) => {
                 status: 'Pending',
                 createdAt: new Date().toISOString(),
                 isRead: false,
-                area: 0,
+                area: Number(area) || 0,
                 estimatedCost: 0,
                 basePriceAtRequest: product.basePrice || 0
             });
@@ -88,7 +89,7 @@ const ProductDetail = ({ product, onClose }) => {
                                 <div className="flex items-center gap-4">
                                     <div className="flex items-baseline gap-1">
                                         <IndianRupee className="w-5 h-5 text-slate-950" />
-                                        <span className="text-4xl font-black text-slate-950 tabular-nums">{product.basePrice.toLocaleString()}</span>
+                                        <span className="text-4xl font-black text-slate-950 tabular-nums">{product.basePrice?.toLocaleString() || '0'}</span>
                                         <span className="text-xs font-black text-slate-400 uppercase tracking-widest ml-1">/ SQ FT</span>
                                     </div>
                                     <div className="h-8 w-[1px] bg-slate-100 mx-2"></div>
@@ -145,6 +146,31 @@ const ProductDetail = ({ product, onClose }) => {
                                     </div>
                                 </div>
                             )}
+
+                            {/* Area Specification for Direct Requests */}
+                            <div className="space-y-4 p-6 bg-premium-purple/5 rounded-3xl border border-premium-purple/10">
+                                <div className="flex items-center justify-between mb-2">
+                                    <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                                        <Ruler className="w-3 h-3" /> Projected Scale
+                                    </h3>
+                                    {area > 0 && (
+                                        <span className="text-[10px] font-black text-premium-purple animate-pulse">
+                                            EST. VALUATION: ₹{(Number(area) * (product.basePrice || 0) + (Number(area) * 20) + (Number(area) > 1000 ? 6000 : Number(area) > 500 ? 4000 : 2500)).toLocaleString()}
+                                        </span>
+                                    )}
+                                </div>
+                                <div className="relative group">
+                                    <input
+                                        type="number"
+                                        value={area}
+                                        onChange={(e) => setArea(e.target.value)}
+                                        placeholder="Enter estimated area in sq ft..."
+                                        className="w-full bg-white border border-slate-200 rounded-2xl py-4 px-6 text-slate-950 focus:outline-none focus:ring-4 focus:ring-premium-purple/10 focus:border-premium-purple transition-all font-black"
+                                    />
+                                    <span className="absolute right-6 top-1/2 -translate-y-1/2 text-[10px] font-black text-slate-300 uppercase">SQ FT</span>
+                                </div>
+                                <p className="text-[9px] text-slate-400 font-bold leading-tight"> Providing an estimated area allows us to generate a preliminary financial projection immediately.</p>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -156,15 +182,15 @@ const ProductDetail = ({ product, onClose }) => {
                         onClick={onClose}
                         className="flex-1 py-5 px-8 bg-white border border-slate-200 text-slate-500 rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-slate-100 transition-all active:scale-95"
                     >
-                        Dismiss Review
+                        Return to Gallery
                     </button>
                     <PremiumButton
+                        className="flex-[2] py-5"
                         onClick={handleRequestQuote}
-                        loading={requesting}
-                        className="flex-[2] py-5 text-slate-950 !shadow-glow font-black uppercase tracking-[0.2em] text-xs"
-                        icon={ArrowRight}
+                        disabled={requesting}
                     >
-                        Initialize Proposal Request
+                        {requesting ? 'Dispatching...' : 'Request Architectural Proposal'}
+                        <ArrowRight className="w-4 h-4 ml-2" />
                     </PremiumButton>
                 </div>
             </GlassCard>

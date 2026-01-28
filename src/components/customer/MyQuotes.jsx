@@ -103,7 +103,17 @@ const MyQuotes = () => {
         if (heightMatch) dimensions.height = heightMatch[1];
 
         const area = Number(quote.area) || 0;
-        const total = Number(quote.estimatedCost) || Number(quote.totalCost) || 0;
+        let total = Number(quote.estimatedCost) || Number(quote.totalCost) || 0;
+        let isDraft = false;
+
+        // If no admin valuation but we have info, generate a draft valuation to "make it correct"
+        if (total === 0 && area > 0 && quote.basePriceAtRequest > 0) {
+            const matCost = area * quote.basePriceAtRequest;
+            const labCost = area * 20;
+            const transCost = area > 1000 ? 6000 : area > 500 ? 4000 : 2500;
+            total = matCost + labCost + transCost;
+            isDraft = true;
+        }
 
         // Detailed breakdown calculations
         const laborCost = area > 0 ? area * 20 : 0;
@@ -121,7 +131,8 @@ const MyQuotes = () => {
                 laborCost: laborCost.toFixed(2),
                 transportCost: transportCost.toFixed(2),
                 grandTotal: grandTotal.toFixed(2),
-                isPending: total === 0
+                isPending: total === 0,
+                isDraft: isDraft
             },
             formData: dimensions,
             product: { name: quote.productName },
