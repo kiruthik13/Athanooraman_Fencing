@@ -104,7 +104,8 @@ const Calculator = () => {
                 status: 'Pending',
                 notes: `System Calculated - Dimensions: L:${formData.length}ft, W:${formData.width}ft, H:${formData.height}ft`,
                 createdAt: new Date().toISOString(),
-                isRead: false
+                isRead: false,
+                basePriceAtRequest: products.find(p => p.id === calculations.productId)?.basePrice || 0
             };
 
             await addDoc(collection(db, 'quotes'), quoteData);

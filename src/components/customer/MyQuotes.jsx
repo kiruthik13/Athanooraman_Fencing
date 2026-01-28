@@ -105,11 +105,18 @@ const MyQuotes = () => {
         const area = Number(quote.area) || 0;
         const total = Number(quote.estimatedCost) || Number(quote.totalCost) || 0;
 
-        // Only calculate detailed breakdown if we have a valid total and area
+        // Use recorded base price if available for a more accurate breakdown preview
+        const baseRate = quote.basePriceAtRequest || 0;
+
         const laborCost = area > 0 ? area * 20 : 0;
         const transportCost = area > 0 ? (area > 1000 ? 6000 : area > 500 ? 4000 : 2500) : 0;
-        const materialCost = total > 0 ? Math.max(0, total - laborCost - transportCost) : 0;
-        const grandTotal = total > 0 ? total : 0;
+
+        // If we have no total but have area and baseRate, show estimated material cost
+        const materialCost = total > 0
+            ? Math.max(0, total - laborCost - transportCost)
+            : (area > 0 && baseRate > 0 ? area * baseRate : 0);
+
+        const grandTotal = total > 0 ? total : (materialCost > 0 ? materialCost + laborCost + transportCost : 0);
 
         const preparedQuote = {
             ...quote,

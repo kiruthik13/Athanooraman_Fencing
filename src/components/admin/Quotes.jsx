@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { FileText, Search, Check, X, Clock, Filter, Sparkles, IndianRupee, Calendar, User, Mail, ArrowRight, Edit, RotateCcw } from 'lucide-react';
-import { collection, onSnapshot, doc, updateDoc } from 'firebase/firestore';
+import { collection, onSnapshot, doc, updateDoc, getDocs } from 'firebase/firestore';
 import { db } from '../../config/firebase';
 import { useToast } from '../common/Toast';
 import LoadingSpinner from '../common/LoadingSpinner';
@@ -15,9 +15,20 @@ const Quotes = () => {
     const [statusFilter, setStatusFilter] = useState('All');
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [editingQuote, setEditingQuote] = useState(null);
+    const [products, setProducts] = useState([]);
     const { showToast } = useToast();
 
     useEffect(() => {
+        const fetchProducts = async () => {
+            try {
+                const querySnapshot = await getDocs(collection(db, 'products'));
+                setProducts(querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+            } catch (err) {
+                console.error("Error fetching referential products:", err);
+            }
+        };
+        fetchProducts();
+
         setLoading(true);
         const unsubscribe = onSnapshot(collection(db, 'quotes'), (snap) => {
             const quotesData = snap.docs.map(doc => ({
@@ -40,6 +51,13 @@ const Quotes = () => {
     }, []);
 
     const handleUpdateStatus = async (id, newStatus) => {
+        if (newStatus === 'Approved') {
+            const quote = quotes.find(q => q.id === id);
+            if (!quote || (Number(quote.estimatedCost) || Number(quote.totalCost) || 0) === 0) {
+                showToast('Cannot approve a quote with zero valuation. Please edit and set a value first.', 'error');
+                return;
+            }
+        }
         try {
             await updateDoc(doc(db, 'quotes', id), {
                 status: newStatus,
@@ -345,6 +363,21 @@ const Quotes = () => {
                                         className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-6 text-white focus:outline-none focus:ring-4 focus:ring-premium-cyan/10 focus:border-premium-cyan transition-all font-black text-lg tabular-nums"
                                         required
                                     />
+                                    {editingQuote.area > 0 && products.find(p => p.id === editingQuote.productId || p.name === editingQuote.productName) && (
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                const product = products.find(p => p.id === editingQuote.productId || p.name === editingQuote.productName);
+                                                const basePrice = editingQuote.basePriceAtRequest || product.basePrice || 0;
+                                                const suggested = Number(editingQuote.area) * basePrice;
+                                                setEditingQuote({ ...editingQuote, estimatedCost: suggested });
+                                                showToast(`Valuation auto-calculated at ₹${basePrice}/sqft`, 'info');
+                                            }}
+                                            className="mt-2 text-[9px] font-black text-premium-cyan uppercase tracking-widest hover:underline flex items-center gap-1"
+                                        >
+                                            <RotateCcw className="w-3 h-3" /> Use Suggested: ₹{(Number(editingQuote.area) * (editingQuote.basePriceAtRequest || products.find(p => p.id === editingQuote.productId || p.name === editingQuote.productName)?.basePrice || 0)).toLocaleString()}
+                                        </button>
+                                    )}
                                 </div>
                                 <div className="space-y-2">
                                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Project Scale (SQ FT)</label>

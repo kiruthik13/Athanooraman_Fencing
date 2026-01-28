@@ -27,7 +27,10 @@ const ProductDetail = ({ product, onClose }) => {
                 clientName: currentUser.displayName || currentUser.email,
                 status: 'Pending',
                 createdAt: new Date().toISOString(),
-                isRead: false
+                isRead: false,
+                area: 0,
+                estimatedCost: 0,
+                basePriceAtRequest: product.basePrice || 0
             });
             showToast('Proposal request dispatched successfully', 'success');
             onClose();
