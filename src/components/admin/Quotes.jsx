@@ -243,7 +243,7 @@ const Quotes = () => {
                                             </span>
                                         </td>
                                         <td className="px-8 py-6">
-                                            <div className="flex gap-2 justify-end opacity-0 group-hover:opacity-100 transition-all transform translate-x-2 group-hover:translate-x-0">
+                                            <div className="flex gap-2 justify-end transition-all">
                                                 <button
                                                     onClick={(e) => {
                                                         e.stopPropagation();

@@ -131,7 +131,7 @@ const BillGenerator = ({ calculations, formData, product, customerInfo, onClose 
                                 Material Cost <span style={{ fontSize: '8px', color: '#6b7280' }}>({calculations.area} sq ft)</span>
                             </td>
                             <td style={{ textAlign: 'right', padding: '4px 0', color: '#111827', fontWeight: '600' }}>
-                                ₹{parseFloat(calculations.materialCost).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                ₹{Math.max(0, parseFloat(calculations.materialCost)).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                             </td>
                         </tr>
                         <tr style={{ borderBottom: '1px solid #e5e7eb' }}>
