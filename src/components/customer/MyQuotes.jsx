@@ -102,8 +102,8 @@ const MyQuotes = () => {
         if (widthMatch) dimensions.width = widthMatch[1];
         if (heightMatch) dimensions.height = heightMatch[1];
 
-        const area = parseFloat(quote.area) || 0;
-        const total = parseFloat(quote.estimatedCost) || 0;
+        const area = Number(quote.area) || 0;
+        const total = Number(quote.estimatedCost) || Number(quote.totalCost) || 0;
         const laborCost = area * 20;
         const transportCost = area > 1000 ? 6000 : area > 500 ? 4000 : 2500;
         const materialCost = total - laborCost - transportCost;

@@ -59,7 +59,7 @@ const Quotes = () => {
             await updateDoc(quoteRef, {
                 productName: editingQuote.productName,
                 estimatedCost: Number(editingQuote.estimatedCost) || Number(editingQuote.totalCost) || 0,
-                area: Number(editingQuote.area),
+                area: Number(editingQuote.area) || 0, // Ensure area is a number, default to 0
                 notes: editingQuote.notes || '',
                 updatedAt: new Date().toISOString()
             });
@@ -338,7 +338,7 @@ const Quotes = () => {
                                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Net Valuation (₹)</label>
                                     <input
                                         type="number"
-                                        value={Number(editingQuote.estimatedCost) || Number(editingQuote.totalCost) || 0}
+                                        value={editingQuote.estimatedCost !== undefined ? editingQuote.estimatedCost : (editingQuote.totalCost || 0)}
                                         onChange={(e) => setEditingQuote({ ...editingQuote, estimatedCost: e.target.value })}
                                         className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-6 text-white focus:outline-none focus:ring-4 focus:ring-premium-cyan/10 focus:border-premium-cyan transition-all font-black text-lg tabular-nums"
                                         required
@@ -348,7 +348,7 @@ const Quotes = () => {
                                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Project Scale (SQ FT)</label>
                                     <input
                                         type="number"
-                                        value={editingQuote.area || 0}
+                                        value={editingQuote.area !== undefined ? editingQuote.area : 0}
                                         onChange={(e) => setEditingQuote({ ...editingQuote, area: e.target.value })}
                                         className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-6 text-white focus:outline-none focus:ring-4 focus:ring-premium-cyan/10 focus:border-premium-cyan transition-all font-black text-lg"
                                         required
